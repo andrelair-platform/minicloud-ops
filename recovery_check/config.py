@@ -8,7 +8,7 @@
 
 # Set to a real healthchecks.io UUID to receive failure reports via POST.
 # Example: "https://hc-ping.com/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/fail"
-HC_FAIL_URL: str = "https://hc-ping.com/REPLACE_WITH_UUID/fail"
+HC_FAIL_URL: str = "https://hc-ping.com/6a37bfa6-3633-4f3c-afbb-8b76ba4f508e/fail"
 
 # Log destinations (must be writable by the user running the service)
 LOG_FILE: str = "/var/log/minicloud-recovery.log"
