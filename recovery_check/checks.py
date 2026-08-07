@@ -192,6 +192,48 @@ def check_tailscale() -> CheckResult:
         return CheckResult("Tailscale", False, "no peer list")
 
 
+# ── Backup ───────────────────────────────────────────────────────────────────
+
+def check_k3s_backup_age(
+    mc_path: str = "/home/ktayl/.local/bin/mc",
+    bucket: str = "minilocal/k3s-backup/",
+    max_age_hours: int = 25,
+) -> CheckResult:
+    """Warn if the latest k3s SQLite backup is older than max_age_hours."""
+    import subprocess
+    from datetime import datetime, timezone
+
+    try:
+        r = subprocess.run(
+            [mc_path, "ls", "--json", bucket],
+            capture_output=True, text=True, timeout=15,
+        )
+        if r.returncode != 0:
+            return CheckResult("k3s backup", False, "mc ls failed")
+        lines = [l for l in r.stdout.strip().splitlines() if l]
+        if not lines:
+            return CheckResult("k3s backup", False, "no backups found")
+        entries = []
+        for l in lines:
+            try:
+                entries.append(json.loads(l))
+            except json.JSONDecodeError:
+                pass
+        if not entries:
+            return CheckResult("k3s backup", False, "no parseable entries")
+        latest = sorted(entries, key=lambda x: x.get("lastModified", ""))[-1]
+        ts_str = latest.get("lastModified", "")
+        if not ts_str:
+            return CheckResult("k3s backup", False, "no timestamp in mc output")
+        dt = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+        age_h = (datetime.now(timezone.utc) - dt).total_seconds() / 3600
+        if age_h <= max_age_hours:
+            return CheckResult(f"k3s backup ({age_h:.1f}h old)", True)
+        return CheckResult(f"k3s backup ({age_h:.0f}h old)", False, f"> {max_age_hours}h threshold")
+    except Exception as exc:
+        return CheckResult("k3s backup", False, str(exc)[:60])
+
+
 # ── Public ────────────────────────────────────────────────────────────────────
 
 def check_public_endpoint(url: str) -> CheckResult:

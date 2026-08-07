@@ -53,6 +53,22 @@ def remediate_minio(log_path: str, disk_threshold_pct: int = 90) -> None:
         _log(log_path, f"MinIO stopped: disk {pct}% >= {disk_threshold_pct}% — NOT restarting")
 
 
+def remediate_k3s_backup(
+    log_path: str,
+    backup_script: str = "/home/ktayl/bin/kine-backup.sh",
+) -> None:
+    """Trigger an emergency k3s backup in the background (only call when backup is confirmed stale)."""
+    try:
+        subprocess.Popen(
+            [backup_script],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        _log(log_path, f"k3s emergency backup triggered ({backup_script})")
+    except Exception as exc:
+        _log(log_path, f"k3s backup trigger failed: {exc}")
+
+
 def remediate_cloudflared(log_path: str) -> None:
     try:
         rc = subprocess.run(

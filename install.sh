@@ -21,7 +21,7 @@ chmod +x /usr/local/bin/minicloud-recovery-check
 echo "Entry point: /usr/local/bin/minicloud-recovery-check"
 
 echo "=== Creating log files (world-writable so ktayl and root can both append) ==="
-for f in /var/log/minicloud-recovery.log /var/log/minicloud-rto.log /var/log/minicloud-remediation.log; do
+for f in /var/log/minicloud-recovery.log /var/log/minicloud-rto.log /var/log/minicloud-remediation.log /var/log/minicloud-wol.log; do
     touch "$f"
     chmod 666 "$f"
 done
@@ -38,15 +38,20 @@ else
     echo "/etc/minicloud/heartbeat.env already exists — leaving unchanged"
 fi
 
+echo "=== Installing swift-mac WoL script ==="
+install -m 755 "$REPO_DIR/scripts/swift-mac-wake.py" /usr/local/bin/minicloud-wake-swift-mac
+
 echo "=== Installing systemd services ==="
 cp "$REPO_DIR/systemd/minicloud-post-boot-check.service" "$SYSTEMD_DIR/"
 cp "$REPO_DIR/systemd/restore-cluster-nat.service" "$SYSTEMD_DIR/"
 cp "$REPO_DIR/systemd/minicloud-heartbeat.service" "$SYSTEMD_DIR/"
 cp "$REPO_DIR/systemd/minicloud-heartbeat.timer" "$SYSTEMD_DIR/"
+cp "$REPO_DIR/systemd/minicloud-wake-swift-mac.service" "$SYSTEMD_DIR/"
 
 systemctl daemon-reload
 systemctl enable minicloud-post-boot-check.service
 systemctl enable restore-cluster-nat.service
+systemctl enable minicloud-wake-swift-mac.service
 # Timer is NOT enabled automatically — operator must set UUID first:
 #   edit /etc/minicloud/heartbeat.env
 #   systemctl enable --now minicloud-heartbeat.timer

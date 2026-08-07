@@ -1,0 +1,16 @@
+[Unit]
+Description=Send WoL to swift-mac if NotReady at boot
+After=network-online.target k3s.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ktayl
+# Wait for k3s to settle before checking node status
+ExecStartPre=/bin/sleep 60
+ExecStart=/usr/bin/python3 /usr/local/bin/minicloud-wake-swift-mac
+StandardOutput=append:/var/log/minicloud-wol.log
+StandardError=append:/var/log/minicloud-wol.log
+
+[Install]
+WantedBy=multi-user.target

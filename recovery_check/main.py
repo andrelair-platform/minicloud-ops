@@ -17,6 +17,7 @@ from .checks import (
     check_dns,
     check_harbor,
     check_internet,
+    check_k3s_backup_age,
     check_k3s_nodes,
     check_longhorn_volumes,
     check_minio_docker,
@@ -27,7 +28,7 @@ from .checks import (
     check_vault,
 )
 from .models import CheckResult
-from .remediation import remediate_cloudflared, remediate_minio
+from .remediation import remediate_cloudflared, remediate_k3s_backup, remediate_minio
 
 
 def _boot_timestamp() -> int:
@@ -85,6 +86,12 @@ def main() -> int:
     results.append(check_cloudflared())
     results.append(check_tailscale())
     results.append(check_public_endpoint(config.PUBLIC_CHECK_URL))
+    backup_result = check_k3s_backup_age(
+        mc_path=config.MC_PATH,
+        bucket=config.K3S_BACKUP_BUCKET,
+        max_age_hours=config.K3S_BACKUP_MAX_AGE_HOURS,
+    )
+    results.append(backup_result)
 
     # ── Build report ──────────────────────────────────────────────────────────
     end_ts = int(time.time())
@@ -118,6 +125,9 @@ def main() -> int:
 
     if failed > 0:
         _notify_failure(report)
+    elif not backup_result.ok:
+        # Platform is otherwise healthy — safe to trigger an emergency backup
+        remediate_k3s_backup(config.REMEDIATION_LOG, config.K3S_BACKUP_SCRIPT)
 
     return failed
 

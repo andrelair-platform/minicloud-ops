@@ -32,3 +32,9 @@ POSTGRES_INSTANCES: list[tuple[str, str]] = [
 # ── Remediation ───────────────────────────────────────────────────────────────
 # MinIO is NOT restarted if controller disk usage is above this threshold
 MINIO_DISK_RESTART_THRESHOLD_PCT: int = 90
+
+# ── k3s backup ────────────────────────────────────────────────────────────────
+MC_PATH: str = "/home/ktayl/.local/bin/mc"
+K3S_BACKUP_BUCKET: str = "minilocal/k3s-backup/"
+K3S_BACKUP_MAX_AGE_HOURS: int = 25
+K3S_BACKUP_SCRIPT: str = "/home/ktayl/bin/kine-backup.sh"
