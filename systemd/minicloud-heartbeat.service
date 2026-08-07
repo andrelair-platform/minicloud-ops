@@ -1,0 +1,9 @@
+[Unit]
+Description=Minicloud controller heartbeat ping (healthchecks.io)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/minicloud/heartbeat.env
+ExecStart=/bin/sh -c 'echo "$HC_HEARTBEAT_URL" | grep -q REPLACE || /usr/bin/curl -fsS --max-time 10 --retry 2 "$HC_HEARTBEAT_URL"'

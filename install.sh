@@ -20,19 +20,44 @@ ENTRY
 chmod +x /usr/local/bin/minicloud-recovery-check
 echo "Entry point: /usr/local/bin/minicloud-recovery-check"
 
+echo "=== Creating log files (world-writable so ktayl and root can both append) ==="
+for f in /var/log/minicloud-recovery.log /var/log/minicloud-rto.log /var/log/minicloud-remediation.log; do
+    touch "$f"
+    chmod 666 "$f"
+done
+
+echo "=== Installing heartbeat config (edit UUID before enabling timer) ==="
+mkdir -p /etc/minicloud
+if [ ! -f /etc/minicloud/heartbeat.env ]; then
+    cat > /etc/minicloud/heartbeat.env << 'ENV'
+# Replace with your healthchecks.io check URL (period=2min, grace=10min)
+HC_HEARTBEAT_URL=https://hc-ping.com/REPLACE_WITH_UUID
+ENV
+    echo "Created /etc/minicloud/heartbeat.env — set HC_HEARTBEAT_URL before enabling the timer"
+else
+    echo "/etc/minicloud/heartbeat.env already exists — leaving unchanged"
+fi
+
 echo "=== Installing systemd services ==="
 cp "$REPO_DIR/systemd/minicloud-post-boot-check.service" "$SYSTEMD_DIR/"
 cp "$REPO_DIR/systemd/restore-cluster-nat.service" "$SYSTEMD_DIR/"
+cp "$REPO_DIR/systemd/minicloud-heartbeat.service" "$SYSTEMD_DIR/"
+cp "$REPO_DIR/systemd/minicloud-heartbeat.timer" "$SYSTEMD_DIR/"
 
 systemctl daemon-reload
 systemctl enable minicloud-post-boot-check.service
 systemctl enable restore-cluster-nat.service
+# Timer is NOT enabled automatically — operator must set UUID first:
+#   edit /etc/minicloud/heartbeat.env
+#   systemctl enable --now minicloud-heartbeat.timer
 
 echo ""
-echo "=== Done. To run a manual check now: ==="
-echo "  minicloud-recovery-check"
+echo "=== Done ==="
+echo "Manual check:   minicloud-recovery-check"
+echo "Logs:           /var/log/minicloud-recovery.log"
+echo "                /var/log/minicloud-rto.log"
+echo "                /var/log/minicloud-remediation.log"
 echo ""
-echo "=== Logs will be written to: ==="
-echo "  /var/log/minicloud-recovery.log"
-echo "  /var/log/minicloud-rto.log"
-echo "  /var/log/minicloud-remediation.log"
+echo "=== To enable heartbeat (after setting UUID in /etc/minicloud/heartbeat.env): ==="
+echo "  systemctl enable --now minicloud-heartbeat.timer"
+echo "  systemctl list-timers minicloud-heartbeat.timer"
