@@ -200,13 +200,16 @@ def check_k3s_backup_age(
     max_age_hours: int = 25,
 ) -> CheckResult:
     """Warn if the latest k3s SQLite backup is older than max_age_hours."""
+    import os
     import subprocess
     from datetime import datetime, timezone
 
     try:
+        # mc alias config lives in ~ktayl/.mc — pass HOME so it works when running as root
+        env = {**os.environ, "HOME": "/home/ktayl"}
         r = subprocess.run(
             [mc_path, "ls", "--json", bucket],
-            capture_output=True, text=True, timeout=15,
+            capture_output=True, text=True, timeout=15, env=env,
         )
         if r.returncode != 0:
             return CheckResult("k3s backup", False, "mc ls failed")

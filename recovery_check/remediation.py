@@ -58,11 +58,15 @@ def remediate_k3s_backup(
     backup_script: str = "/home/ktayl/bin/kine-backup.sh",
 ) -> None:
     """Trigger an emergency k3s backup in the background (only call when backup is confirmed stale)."""
+    import os
     try:
+        # kine-backup.sh uses mc under ~ktayl — HOME ensures the alias is found when running as root
+        env = {**os.environ, "HOME": "/home/ktayl"}
         subprocess.Popen(
             [backup_script],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
+            env=env,
         )
         _log(log_path, f"k3s emergency backup triggered ({backup_script})")
     except Exception as exc:
