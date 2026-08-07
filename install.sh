@@ -6,8 +6,11 @@ set -euo pipefail
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SYSTEMD_DIR=/etc/systemd/system
 
+echo "=== Bootstrapping pip ==="
+python3 -m ensurepip --upgrade --quiet 2>/dev/null || true
+
 echo "=== Installing Python package ==="
-pip3 install --break-system-packages -e "$REPO_DIR" --quiet
+python3 -m pip install --break-system-packages -e "$REPO_DIR" --quiet
 echo "Entry point: $(which minicloud-recovery-check)"
 
 echo "=== Installing systemd services ==="
