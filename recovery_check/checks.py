@@ -28,12 +28,17 @@ def check_dns() -> CheckResult:
     pods = [p for p in stdout.strip().splitlines() if p and p != "NAME"]
     if not pods:
         return CheckResult("DNS (coredns)", False, "no coredns pods")
-    rc, stdout, stderr = run(
-        "kubectl", "exec", "-n", "kube-system", pods[0],
-        "--", "nslookup", "kubernetes.default",
-    )
-    if rc == 0 and "kubernetes.default" in stdout:
-        return CheckResult("DNS (coredns)", True)
+    # kubectl exec to coredns can transiently return "Internal error occurred" — retry once
+    for attempt in range(2):
+        rc, stdout, stderr = run(
+            "kubectl", "exec", "-n", "kube-system", pods[0],
+            "--", "nslookup", "kubernetes.default",
+        )
+        if rc == 0 and "kubernetes.default" in stdout:
+            return CheckResult("DNS (coredns)", True)
+        if attempt == 0 and "Internal error" in stderr:
+            import time
+            time.sleep(3)
     return CheckResult("DNS (coredns)", False, stderr.strip()[:60] or "nslookup failed")
 
 
