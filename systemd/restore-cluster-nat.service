@@ -1,0 +1,14 @@
+[Unit]
+Description=Restore minicloud cluster NAT/forwarding rules
+After=network-online.target
+Wants=network-online.target
+Before=k3s.service docker.service
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/iptables-restore /etc/iptables/rules.v4
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

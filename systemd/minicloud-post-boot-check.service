@@ -1,0 +1,17 @@
+[Unit]
+Description=Minicloud platform recovery check (post-boot)
+After=k3s.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Wait 3 min for k3s and workload pods to settle before checking
+ExecStartPre=/bin/sleep 180
+ExecStart=/usr/local/bin/minicloud-recovery-check
+# Propagate the kubeconfig used by ktayl
+Environment=KUBECONFIG=/home/ktayl/.kube/config
+Environment=HOME=/home/ktayl
+RemainAfterExit=no
+
+[Install]
+WantedBy=multi-user.target
