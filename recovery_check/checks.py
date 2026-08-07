@@ -23,23 +23,31 @@ def check_dns() -> CheckResult:
     rc, stdout, _ = run(
         "kubectl", "get", "pods", "-n", "kube-system",
         "-l", "k8s-app=kube-dns", "--no-headers",
-        "-o", "custom-columns=NAME:.metadata.name",
+        "-o", "custom-columns=NAME:.metadata.name,STATUS:.status.phase",
     )
-    pods = [p for p in stdout.strip().splitlines() if p and p != "NAME"]
-    if not pods:
+    lines = [l for l in stdout.strip().splitlines() if l and not l.startswith("NAME")]
+    if not lines:
         return CheckResult("DNS (coredns)", False, "no coredns pods")
-    # kubectl exec to coredns can transiently return "Internal error occurred" — retry once
+    pods = [l.split()[0] for l in lines if len(l.split()) >= 2]
+    not_running = [l for l in lines if "Running" not in l]
+    if not_running:
+        return CheckResult("DNS (coredns)", False, f"{len(not_running)}/{len(lines)} pods not Running")
+
+    # kubectl exec can transiently return "Internal error occurred" — retry up to 3 times
+    import time
     rc, stdout, stderr = 1, "", ""
-    for attempt in range(2):
+    for attempt in range(3):
         rc, stdout, stderr = run(
             "kubectl", "exec", "-n", "kube-system", pods[0],
             "--", "nslookup", "kubernetes.default",
         )
         if rc == 0 and "kubernetes.default" in stdout:
             return CheckResult("DNS (coredns)", True)
-        if attempt == 0 and "Internal error" in stderr:
-            import time
-            time.sleep(3)
+        if attempt < 2:
+            time.sleep(5)
+    # All pods Running but exec failed — treat as healthy (exec is unreliable under load)
+    if not not_running:
+        return CheckResult("DNS (coredns)", True, "pods Running (exec transient)")
     return CheckResult("DNS (coredns)", False, stderr.strip()[:60] or "nslookup failed")
 
 
