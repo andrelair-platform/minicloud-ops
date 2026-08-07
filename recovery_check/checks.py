@@ -104,11 +104,12 @@ def check_argocd_apps() -> CheckResult:
 
 
 def check_postgres(namespace: str, pod: str) -> CheckResult:
-    rc, _, stderr = run("kubectl", "exec", "-n", namespace, pod, "--", "pg_isready", "-q")
+    # -h 127.0.0.1 forces TCP; without it pg_isready tries Unix socket at /tmp which may not exist
+    rc, _, stderr = run("kubectl", "exec", "-n", namespace, pod, "--", "pg_isready", "-q", "-h", "127.0.0.1")
     label = f"PostgreSQL ({namespace})"
     if rc == 0:
         return CheckResult(label, True)
-    return CheckResult(label, False, stderr.strip()[:60] or "pg_isready failed")
+    return CheckResult(label, False, stderr.strip()[:60] or f"pg_isready exit={rc}")
 
 
 # ── Services ──────────────────────────────────────────────────────────────────
