@@ -29,6 +29,7 @@ def check_dns() -> CheckResult:
     if not pods:
         return CheckResult("DNS (coredns)", False, "no coredns pods")
     # kubectl exec to coredns can transiently return "Internal error occurred" — retry once
+    rc, stdout, stderr = 1, "", ""
     for attempt in range(2):
         rc, stdout, stderr = run(
             "kubectl", "exec", "-n", "kube-system", pods[0],
