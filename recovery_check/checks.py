@@ -104,8 +104,12 @@ def check_argocd_apps() -> CheckResult:
 
 
 def check_postgres(namespace: str, pod: str) -> CheckResult:
-    # -h 127.0.0.1 forces TCP; without it pg_isready tries Unix socket at /tmp which may not exist
-    rc, _, stderr = run("kubectl", "exec", "-n", namespace, pod, "--", "pg_isready", "-q", "-h", "127.0.0.1")
+    # -h 127.0.0.1 forces TCP; -U postgres required (PG 18 returns exit 3 without explicit user).
+    # bash -c wrapper ensures the exit code is properly propagated through kubectl exec.
+    rc, _, stderr = run(
+        "kubectl", "exec", "-n", namespace, pod, "--",
+        "bash", "-c", "pg_isready -h 127.0.0.1 -U postgres -q",
+    )
     label = f"PostgreSQL ({namespace})"
     if rc == 0:
         return CheckResult(label, True)
