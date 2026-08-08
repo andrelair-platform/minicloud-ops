@@ -75,12 +75,12 @@ def check_longhorn_volumes() -> CheckResult:
         vols = json.loads(stdout).get("items", [])
         bad = [
             v["metadata"]["name"] for v in vols
-            if v.get("status", {}).get("robustness", "") not in ("healthy", "")
+            if v.get("status", {}).get("robustness", "") in ("degraded", "faulted")
         ]
         if not bad:
             return CheckResult(f"Longhorn ({len(vols)} vols)", True)
         sample = ", ".join(bad[:2]) + ("…" if len(bad) > 2 else "")
-        return CheckResult(f"Longhorn ({len(vols)} vols)", False, f"{len(bad)} degraded: {sample}")
+        return CheckResult(f"Longhorn ({len(vols)} vols)", False, f"{len(bad)} degraded/faulted: {sample}")
     except (json.JSONDecodeError, KeyError) as exc:
         return CheckResult("Longhorn volumes", False, str(exc)[:60])
 
