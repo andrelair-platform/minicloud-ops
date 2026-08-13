@@ -73,20 +73,6 @@ def remediate_k3s_backup(
         _log(log_path, f"k3s backup trigger failed: {exc}")
 
 
-def remediate_cloudflared(log_path: str) -> None:
-    try:
-        rc = subprocess.run(
-            ["systemctl", "is-active", "cloudflared"],
-            capture_output=True, timeout=5,
-        ).returncode
-    except Exception:
-        return
-    if rc == 0:
-        return
-    subprocess.run(["systemctl", "restart", "cloudflared"], capture_output=True, timeout=15)
-    time.sleep(5)
-    _log(log_path, "cloudflared restarted")
-
 
 _MINIO_DISK_FLAG = "/var/run/minicloud-minio-was-full.flag"
 

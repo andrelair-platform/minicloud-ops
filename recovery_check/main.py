@@ -28,7 +28,7 @@ from .checks import (
     check_vault,
 )
 from .models import CheckResult
-from .remediation import remediate_cloudflared, remediate_k3s_backup, remediate_minio, remediate_minio_disk_recovery
+from .remediation import remediate_k3s_backup, remediate_minio, remediate_minio_disk_recovery
 
 
 def _boot_timestamp() -> int:
@@ -68,7 +68,6 @@ def main() -> int:
     # ── Auto-remediation before checks ────────────────────────────────────────
     remediate_minio(config.REMEDIATION_LOG, config.MINIO_DISK_RESTART_THRESHOLD_PCT)
     remediate_minio_disk_recovery(config.REMEDIATION_LOG)
-    remediate_cloudflared(config.REMEDIATION_LOG)
 
     # ── Run all checks ────────────────────────────────────────────────────────
     results: list[CheckResult] = []

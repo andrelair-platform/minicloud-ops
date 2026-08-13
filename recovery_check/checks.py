@@ -167,10 +167,15 @@ def check_minio_docker() -> CheckResult:
 
 
 def check_cloudflared() -> CheckResult:
-    rc, _, _ = run("systemctl", "is-active", "cloudflared")  # noqa: F841
-    if rc == 0:
-        return CheckResult("cloudflared", True)
-    return CheckResult("cloudflared", False, "inactive")
+    rc, stdout, _ = run(
+        "kubectl", "get", "deployment", "cloudflared",
+        "-n", "cloudflare-tunnel",
+        "-o", "jsonpath={.status.readyReplicas}",
+    )
+    ready = int(stdout.strip() or "0")
+    if rc == 0 and ready >= 1:
+        return CheckResult("cloudflared (k8s)", True, f"{ready}/2 ready")
+    return CheckResult("cloudflared (k8s)", False, f"ready={ready}")
 
 
 def check_tailscale() -> CheckResult:
