@@ -86,3 +86,31 @@ def remediate_cloudflared(log_path: str) -> None:
     subprocess.run(["systemctl", "restart", "cloudflared"], capture_output=True, timeout=15)
     time.sleep(5)
     _log(log_path, "cloudflared restarted")
+
+
+_MINIO_DISK_FLAG = "/var/run/minicloud-minio-was-full.flag"
+
+
+def remediate_minio_disk_recovery(log_path: str, high_pct: int = 90, low_pct: int = 80) -> None:
+    """Restart MinIO after disk recovers from a full event (clears cached disk-full error).
+
+    MinIO caches the disk-full state in memory; after disk space is freed the
+    container keeps refusing writes until restarted.  This function tracks the
+    high-water mark via a flag file in /var/run (tmpfs → cleared on reboot) and
+    issues 'docker restart minio' exactly once when the disk drops below the low
+    threshold after having been above the high threshold.
+    """
+    from pathlib import Path
+    pct = _disk_pct()
+    flag = Path(_MINIO_DISK_FLAG)
+
+    if pct >= high_pct:
+        flag.touch(exist_ok=True)
+        return
+
+    if pct < low_pct and flag.exists():
+        if _docker_state("minio") == "running":
+            subprocess.run(["docker", "restart", "minio"], capture_output=True, timeout=30)
+            time.sleep(10)
+            _log(log_path, f"MinIO restarted after disk recovery ({pct}% < {low_pct}%)")
+        flag.unlink(missing_ok=True)
