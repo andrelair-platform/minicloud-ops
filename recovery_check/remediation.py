@@ -74,7 +74,7 @@ def remediate_k3s_backup(
 
 
 
-_MINIO_DISK_FLAG = "/tmp/minicloud-minio-was-full.flag"
+_MINIO_DISK_FLAG = "/home/ktayl/.minicloud/minio-was-full.flag"
 
 
 def remediate_minio_disk_recovery(log_path: str, high_pct: int = 90, low_pct: int = 80) -> None:

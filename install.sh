@@ -26,6 +26,11 @@ for f in /var/log/minicloud-recovery.log /var/log/minicloud-rto.log /var/log/min
     chmod 666 "$f"
 done
 
+echo "=== Creating state directory for ktayl user ==="
+mkdir -p /home/ktayl/.minicloud
+touch /home/ktayl/.minicloud/minio-was-full.flag
+chown ktayl:ktayl /home/ktayl/.minicloud /home/ktayl/.minicloud/minio-was-full.flag
+
 echo "=== Installing heartbeat config (edit UUID before enabling timer) ==="
 mkdir -p /etc/minicloud
 if [ ! -f /etc/minicloud/heartbeat.env ]; then
