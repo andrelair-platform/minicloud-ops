@@ -20,6 +20,13 @@ INTERNET_CHECK_URL: str = "https://1.1.1.1"
 VAULT_HEALTH_URL: str = "https://vault.devandre.sbs/v1/sys/health"
 PUBLIC_CHECK_URL: str = "https://homer.devandre.sbs"
 
+# Controller MAAS bind9 upstream. CoreDNS forwards external queries here;
+# if bind9 (10.0.0.1:53) is down the whole cluster loses external DNS while
+# check_dns() still passes (kubernetes.default resolves internally).
+# 2026-08-18 disk-full -> DNS outage post-mortem.
+UPSTREAM_DNS_SERVER: str = "10.0.0.1"
+UPSTREAM_DNS_TEST_DOMAIN: str = "hc-ping.com"
+
 # ── Kubernetes ────────────────────────────────────────────────────────────────
 EXPECTED_NODE_COUNT: int = 5
 

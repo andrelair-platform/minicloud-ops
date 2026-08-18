@@ -51,6 +51,23 @@ def check_dns() -> CheckResult:
     return CheckResult("DNS (coredns)", False, stderr.strip()[:60] or "nslookup failed")
 
 
+def check_upstream_dns(server: str = "10.0.0.1",
+                       domain: str = "hc-ping.com") -> CheckResult:
+    """Verify the controller MAAS bind9 upstream resolves an EXTERNAL name.
+
+    CoreDNS forwards external queries to this server. If bind9 is down the
+    cluster loses all off-cluster resolution (2026-08-18 incident) yet
+    check_dns() still passes because kubernetes.default is resolved by
+    CoreDNS itself. This is the check that would have caught that outage.
+    """
+    rc, stdout, err = run("dig", "+short", "+time=3", "+tries=1",
+                          f"@{server}", domain)
+    if rc == 0 and stdout.strip():
+        return CheckResult("Upstream DNS (bind9)", True)
+    return CheckResult("Upstream DNS (bind9)", False,
+                       err.strip()[:60] or f"{server}:53 no answer for {domain}")
+
+
 # ── Kubernetes ────────────────────────────────────────────────────────────────
 
 def check_k3s_nodes(expected: int = 5) -> CheckResult:

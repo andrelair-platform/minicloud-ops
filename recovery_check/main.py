@@ -25,6 +25,7 @@ from .checks import (
     check_public_endpoint,
     check_pvcs,
     check_tailscale,
+    check_upstream_dns,
     check_vault,
 )
 from .models import CheckResult
@@ -74,6 +75,7 @@ def main() -> int:
 
     results.append(check_internet(config.INTERNET_CHECK_URL))
     results.append(check_dns())
+    results.append(check_upstream_dns(config.UPSTREAM_DNS_SERVER, config.UPSTREAM_DNS_TEST_DOMAIN))
     results.append(check_k3s_nodes(config.EXPECTED_NODE_COUNT))
     results.append(check_longhorn_volumes())
     results.append(check_pvcs())
