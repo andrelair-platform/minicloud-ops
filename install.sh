@@ -45,6 +45,7 @@ fi
 
 echo "=== Installing swift-mac WoL script ==="
 install -m 755 "$REPO_DIR/scripts/swift-mac-wake.py" /usr/local/bin/minicloud-wake-swift-mac
+install -m 755 "$REPO_DIR/scripts/bind9-guard.py" /usr/local/bin/minicloud-bind9-guard
 
 echo "=== Installing systemd services ==="
 cp "$REPO_DIR/systemd/minicloud-post-boot-check.service" "$SYSTEMD_DIR/"
@@ -52,11 +53,13 @@ cp "$REPO_DIR/systemd/restore-cluster-nat.service" "$SYSTEMD_DIR/"
 cp "$REPO_DIR/systemd/minicloud-heartbeat.service" "$SYSTEMD_DIR/"
 cp "$REPO_DIR/systemd/minicloud-heartbeat.timer" "$SYSTEMD_DIR/"
 cp "$REPO_DIR/systemd/minicloud-wake-swift-mac.service" "$SYSTEMD_DIR/"
+cp "$REPO_DIR/systemd/minicloud-bind9-guard.service" "$SYSTEMD_DIR/"
 
 systemctl daemon-reload
 systemctl enable minicloud-post-boot-check.service
 systemctl enable restore-cluster-nat.service
 systemctl enable minicloud-wake-swift-mac.service
+systemctl enable minicloud-bind9-guard.service
 # Timer is NOT enabled automatically — operator must set UUID first:
 #   edit /etc/minicloud/heartbeat.env
 #   systemctl enable --now minicloud-heartbeat.timer
