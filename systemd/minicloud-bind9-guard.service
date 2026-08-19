@@ -1,19 +1,13 @@
 [Unit]
-Description=Ensure MAAS bind9 (cluster DNS on 10.0.0.1:53) is running at boot
-# regiond/rackd own the pebble plan; wait for the MAAS supervisor to be up.
-After=snap.maas.pebble.service network-online.target
-Wants=network-online.target
-Requires=snap.maas.pebble.service
+Description=Ensure MAAS bind9 (cluster DNS on 10.0.0.1:53) is running
+After=snap.maas.pebble.service
+# Triggered by minicloud-bind9-guard.timer (boot + every 2 min). No [Install]
+# section: the timer owns scheduling, not multi-user.target.
 
 [Service]
 Type=oneshot
-# Runs as root (default): the pebble socket /var/snap/maas/common/pebble is
-# root-owned. Give MAAS ~90s to bring up Postgres/regiond/rackd and settle its
-# pebble plan before we check bind9, so we don't race the normal startup.
-ExecStartPre=/bin/sleep 90
+# Runs as root (default): the pebble control socket is root-owned and pebble
+# denies control ops to non-root even though the socket is world-writable.
 ExecStart=/usr/bin/python3 /usr/local/bin/minicloud-bind9-guard
 StandardOutput=append:/var/log/minicloud-bind9-guard.log
 StandardError=append:/var/log/minicloud-bind9-guard.log
-
-[Install]
-WantedBy=multi-user.target

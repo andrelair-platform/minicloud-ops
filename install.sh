@@ -54,12 +54,13 @@ cp "$REPO_DIR/systemd/minicloud-heartbeat.service" "$SYSTEMD_DIR/"
 cp "$REPO_DIR/systemd/minicloud-heartbeat.timer" "$SYSTEMD_DIR/"
 cp "$REPO_DIR/systemd/minicloud-wake-swift-mac.service" "$SYSTEMD_DIR/"
 cp "$REPO_DIR/systemd/minicloud-bind9-guard.service" "$SYSTEMD_DIR/"
+cp "$REPO_DIR/systemd/minicloud-bind9-guard.timer" "$SYSTEMD_DIR/"
 
 systemctl daemon-reload
 systemctl enable minicloud-post-boot-check.service
 systemctl enable restore-cluster-nat.service
 systemctl enable minicloud-wake-swift-mac.service
-systemctl enable minicloud-bind9-guard.service
+systemctl enable --now minicloud-bind9-guard.timer
 # Timer is NOT enabled automatically — operator must set UUID first:
 #   edit /etc/minicloud/heartbeat.env
 #   systemctl enable --now minicloud-heartbeat.timer

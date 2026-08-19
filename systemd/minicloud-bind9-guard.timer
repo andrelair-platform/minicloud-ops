@@ -1,0 +1,17 @@
+[Unit]
+Description=Periodically ensure MAAS bind9 (cluster DNS on 10.0.0.1:53) is running
+# Root cause: MAAS apiserver crash-loops (broken PG unix socket after the
+# 2026-08-18 disk-full crash), so MAAS never re-starts bind9 after any MAAS
+# restart (e.g. snap auto-refresh at 08:03 on 2026-08-19). A boot-only guard
+# can't catch a restart on an already-running system, so we re-assert bind9
+# every 2 minutes. Idempotent + cheap: no-op when bind9 is already active.
+
+[Timer]
+# 90s after boot (let MAAS settle), then every 2 minutes.
+OnBootSec=90s
+OnUnitActiveSec=120s
+AccuracySec=15s
+Persistent=true
+
+[Install]
+WantedBy=timers.target
