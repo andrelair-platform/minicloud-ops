@@ -1,13 +1,17 @@
 [Unit]
-Description=MAAS webhook power broker for ThinkPad cluster nodes
-After=network.target
+Description=MAAS webhook power broker (Wake-on-LAN) for ThinkPad cluster nodes
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 /home/ktayl/bin/maas-power-broker.py
+# Runs as ktayl so it uses ktayl's SSH keys for the power-off action.
+User=ktayl
+Group=ktayl
+ExecStart=/usr/bin/python3 /usr/local/bin/maas-power-broker
 Restart=always
 RestartSec=5
 StartLimitIntervalSec=0
 
 [Install]
-WantedBy=default.target
+WantedBy=multi-user.target

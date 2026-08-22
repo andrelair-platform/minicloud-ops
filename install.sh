@@ -45,6 +45,7 @@ fi
 
 echo "=== Installing swift-mac WoL script ==="
 install -m 755 "$REPO_DIR/scripts/swift-mac-wake.py" /usr/local/bin/minicloud-wake-swift-mac
+install -m 755 "$REPO_DIR/scripts/maas-power-broker.py" /usr/local/bin/maas-power-broker
 install -m 755 "$REPO_DIR/scripts/bind9-guard.py" /usr/local/bin/minicloud-bind9-guard
 
 echo "=== Installing systemd services ==="
@@ -53,6 +54,7 @@ cp "$REPO_DIR/systemd/restore-cluster-nat.service" "$SYSTEMD_DIR/"
 cp "$REPO_DIR/systemd/minicloud-heartbeat.service" "$SYSTEMD_DIR/"
 cp "$REPO_DIR/systemd/minicloud-heartbeat.timer" "$SYSTEMD_DIR/"
 cp "$REPO_DIR/systemd/minicloud-wake-swift-mac.service" "$SYSTEMD_DIR/"
+cp "$REPO_DIR/systemd/maas-power-broker.service" "$SYSTEMD_DIR/"
 cp "$REPO_DIR/systemd/minicloud-bind9-guard.service" "$SYSTEMD_DIR/"
 cp "$REPO_DIR/systemd/minicloud-bind9-guard.timer" "$SYSTEMD_DIR/"
 
@@ -60,6 +62,7 @@ systemctl daemon-reload
 systemctl enable minicloud-post-boot-check.service
 systemctl enable restore-cluster-nat.service
 systemctl enable minicloud-wake-swift-mac.service
+systemctl enable --now maas-power-broker.service
 systemctl enable --now minicloud-bind9-guard.timer
 # Timer is NOT enabled automatically — operator must set UUID first:
 #   edit /etc/minicloud/heartbeat.env
