@@ -1,0 +1,13 @@
+[Unit]
+Description=MAAS webhook power broker for ThinkPad cluster nodes
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/ktayl/bin/maas-power-broker.py
+Restart=always
+RestartSec=5
+StartLimitIntervalSec=0
+
+[Install]
+WantedBy=default.target
