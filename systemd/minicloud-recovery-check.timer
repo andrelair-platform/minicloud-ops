@@ -1,0 +1,11 @@
+[Unit]
+Description=Run the minicloud platform recovery check every 6h (feeds healthchecks.io)
+
+[Timer]
+# Every 6h -> 4 pings/day for a 1-day-period check = comfortable margin under the 1h grace.
+OnCalendar=*-*-* 00/6:00:00
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

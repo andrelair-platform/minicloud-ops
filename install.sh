@@ -15,6 +15,8 @@ cat > /usr/local/bin/minicloud-recovery-check << 'ENTRY'
 #!/bin/bash
 # git pull in ~/minicloud-ops picks up changes immediately via the symlink
 export PYTHONPATH="/usr/local/lib/minicloud${PYTHONPATH:+:$PYTHONPATH}"
+# Ensure kubectl works for any invocation (manual, timer), not just the unit env
+export KUBECONFIG="${KUBECONFIG:-/home/ktayl/.kube/config}"
 exec python3 -m recovery_check.main "$@"
 ENTRY
 chmod +x /usr/local/bin/minicloud-recovery-check
@@ -50,6 +52,8 @@ install -m 755 "$REPO_DIR/scripts/bind9-guard.py" /usr/local/bin/minicloud-bind9
 
 echo "=== Installing systemd services ==="
 cp "$REPO_DIR/systemd/minicloud-post-boot-check.service" "$SYSTEMD_DIR/"
+cp "$REPO_DIR/systemd/minicloud-recovery-check.service" "$SYSTEMD_DIR/"
+cp "$REPO_DIR/systemd/minicloud-recovery-check.timer" "$SYSTEMD_DIR/"
 cp "$REPO_DIR/systemd/restore-cluster-nat.service" "$SYSTEMD_DIR/"
 cp "$REPO_DIR/systemd/minicloud-heartbeat.service" "$SYSTEMD_DIR/"
 cp "$REPO_DIR/systemd/minicloud-heartbeat.timer" "$SYSTEMD_DIR/"
@@ -60,6 +64,7 @@ cp "$REPO_DIR/systemd/minicloud-bind9-guard.timer" "$SYSTEMD_DIR/"
 
 systemctl daemon-reload
 systemctl enable minicloud-post-boot-check.service
+systemctl enable --now minicloud-recovery-check.timer
 systemctl enable restore-cluster-nat.service
 systemctl enable minicloud-wake-swift-mac.service
 systemctl enable --now maas-power-broker.service

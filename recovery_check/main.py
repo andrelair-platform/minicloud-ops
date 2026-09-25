@@ -61,6 +61,19 @@ def _notify_failure(report: str) -> None:
     )
 
 
+def _notify_success(report: str) -> None:
+    # Ping the SUCCESS endpoint (base URL, no /fail) so the healthchecks.io check
+    # goes GREEN when the platform is healthy. Without this a healthy run pinged
+    # nothing -> the check could only ever go stale/red.
+    if "REPLACE_WITH_UUID" in config.HC_FAIL_URL:
+        return
+    url = config.HC_FAIL_URL.rsplit("/fail", 1)[0]
+    subprocess.run(
+        ["curl", "-fsS", "--max-time", "10", "--data-raw", report, url],
+        capture_output=True,
+    )
+
+
 def main() -> int:
     boot_ts = _boot_timestamp()
     start_ts = int(time.time())
@@ -127,9 +140,11 @@ def main() -> int:
 
     if failed > 0:
         _notify_failure(report)
-    elif not backup_result.ok:
-        # Platform is otherwise healthy — safe to trigger an emergency backup
-        remediate_k3s_backup(config.REMEDIATION_LOG, config.K3S_BACKUP_SCRIPT)
+    else:
+        _notify_success(report)
+        if not backup_result.ok:
+            # Platform is otherwise healthy — safe to trigger an emergency backup
+            remediate_k3s_backup(config.REMEDIATION_LOG, config.K3S_BACKUP_SCRIPT)
 
     return failed
 
