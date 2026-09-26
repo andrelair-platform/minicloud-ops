@@ -70,7 +70,7 @@ def check_upstream_dns(server: str = "10.0.0.1",
 
 # ── Kubernetes ────────────────────────────────────────────────────────────────
 
-def check_k3s_nodes(expected: int = 5) -> CheckResult:
+def check_k3s_nodes(expected: int = 6) -> CheckResult:
     rc, stdout, _ = run("kubectl", "get", "nodes", "--no-headers")
     if rc != 0:
         return CheckResult(f"k3s nodes (/{expected})", False, "kubectl unreachable")

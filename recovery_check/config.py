@@ -53,7 +53,7 @@ UPSTREAM_DNS_SERVER: str = "10.0.0.1"
 UPSTREAM_DNS_TEST_DOMAIN: str = "hc-ping.com"
 
 # ── Kubernetes ────────────────────────────────────────────────────────────────
-EXPECTED_NODE_COUNT: int = 5
+EXPECTED_NODE_COUNT: int = 6
 
 # Fail the node-resources check if any node reports a kubelet *Pressure condition
 # (Memory/Disk/PID) OR its memory usage exceeds this percent. 2026-09-26: fast-heron
