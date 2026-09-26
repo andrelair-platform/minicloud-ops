@@ -29,6 +29,22 @@ PUBLIC_CHECK_URL: str = "https://homer.devandre.sbs"
 # probed through the public ingress (exercises ingress + authentik together).
 AUTHENTIK_HEALTH_URL: str = "https://auth.devandre.sbs/-/health/ready/"
 
+# AI gateway (LiteLLM) — every AI product routes through it. Internal ingress health probe.
+LITELLM_HEALTH_URL: str = "https://litellm.10.0.0.200.nip.io/health/liveliness"
+
+# cert-manager: warn if any Certificate expires sooner than this many days. cert-manager
+# auto-renews at ~2/3 lifetime, so this only fires if renewal is actually broken.
+CERT_EXPIRY_WARN_DAYS: int = 14
+
+# Flagship functional probes: (label, host, path, resolve_ip). HTTP-probe the app through
+# the ingress — ArgoCD "Healthy" != actually serving. resolve_ip forces the internal
+# ingress IP (empty = public DNS). Accepts 200/301/302/401/403 = "the app answered".
+FLAGSHIP_PROBES: list[tuple[str, str, str, str]] = [
+    ("Retrieva (prod)", "retrieva.online", "/", "10.0.0.200"),
+    ("ktayl-policy (prod)", "ktayl-policy-prod.10.0.0.200.nip.io", "/healthz", "10.0.0.200"),
+    ("ERPNext", "erp.devandre.sbs", "/", ""),
+]
+
 # Controller MAAS bind9 upstream. CoreDNS forwards external queries here;
 # if bind9 (10.0.0.1:53) is down the whole cluster loses external DNS while
 # check_dns() still passes (kubernetes.default resolves internally).
@@ -57,6 +73,10 @@ POSTGRES_INSTANCES: list[tuple[str, str]] = [
     ("ai", "postgresql-ai-0"),
     ("chat", "postgresql-synapse-0"),
 ]
+
+# Controller root-disk usage %: fail above this. 2026-08-18: controller disk filled ->
+# MinIO wedged -> DNS outage. This surfaces it before the cascade.
+CONTROLLER_DISK_PCT_THRESHOLD: int = 90
 
 # ── Remediation ───────────────────────────────────────────────────────────────
 # MinIO is NOT restarted if controller disk usage is above this threshold

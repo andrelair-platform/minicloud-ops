@@ -14,16 +14,21 @@ from . import config
 from .checks import (
     check_argocd_apps,
     check_authentik,
+    check_cert_manager,
     check_cloudflared,
+    check_controller_disk,
     check_dns,
     check_harbor,
+    check_http_app,
     check_ingress_nginx,
     check_internet,
     check_k3s_backup_age,
     check_k3s_nodes,
+    check_litellm,
     check_longhorn_instance_managers,
     check_longhorn_volumes,
     check_minio_docker,
+    check_monitoring,
     check_node_resources,
     check_postgres,
     check_public_endpoint,
@@ -104,11 +109,17 @@ def main() -> int:
     results.append(check_vault(config.VAULT_HEALTH_URL))
     results.append(check_authentik(config.AUTHENTIK_HEALTH_URL))
     results.append(check_ingress_nginx(config.INGRESS_NGINX_NAMESPACE, config.INGRESS_NGINX_DEPLOYMENT))
+    results.append(check_cert_manager(config.CERT_EXPIRY_WARN_DAYS))
     results.append(check_harbor())
     results.append(check_minio_docker())
+    results.append(check_controller_disk(config.CONTROLLER_DISK_PCT_THRESHOLD))
+    results.append(check_monitoring())
+    results.append(check_litellm(config.LITELLM_HEALTH_URL))
     results.append(check_cloudflared())
     results.append(check_tailscale())
     results.append(check_public_endpoint(config.PUBLIC_CHECK_URL))
+    for _label, _host, _path, _rip in config.FLAGSHIP_PROBES:
+        results.append(check_http_app(_label, _host, _path, _rip))
     backup_result = check_k3s_backup_age(
         mc_path=config.MC_PATH,
         bucket=config.K3S_BACKUP_BUCKET,

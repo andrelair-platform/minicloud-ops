@@ -264,6 +264,105 @@ def check_ingress_nginx(namespace: str, deployment: str) -> CheckResult:
     return CheckResult("ingress-nginx", False, f"{ready}/{want} ready")
 
 
+def check_litellm(url: str) -> CheckResult:
+    """AI gateway — every AI product routes through LiteLLM. HTTP health probe."""
+    _, stdout, _ = run("curl", "-fsS", "--max-time", "10", "-k", "-o", "/dev/null", "-w", "%{http_code}", url)
+    if stdout.strip() == "200":
+        return CheckResult("AI gateway (LiteLLM)", True)
+    _, ready, _ = run("kubectl", "get", "deploy", "litellm", "-n", "ai", "-o", "jsonpath={.status.readyReplicas}")
+    dep = "deploy ready" if (ready.strip() or "0").isdigit() and int(ready.strip() or "0") >= 1 else "deploy NOT ready"
+    return CheckResult("AI gateway (LiteLLM)", False, f"HTTP {stdout.strip() or 'timeout'} ({dep})")
+
+
+def check_cert_manager(warn_days: int = 14) -> CheckResult:
+    """cert-manager controller ready + no Certificate that is notReady or expiring within
+    warn_days. cert-manager auto-renews at ~2/3 lifetime, so an expiring cert here means
+    renewal is actually failing -> TLS about to break cluster-wide."""
+    from datetime import datetime, timezone
+    _, ready, _ = run("kubectl", "get", "deploy", "cert-manager", "-n", "cert-manager", "-o", "jsonpath={.status.readyReplicas}")
+    if not ((ready.strip() or "0").isdigit() and int(ready.strip() or "0") >= 1):
+        return CheckResult("cert-manager", False, "controller not ready")
+    rc, stdout, _ = run("kubectl", "get", "certificate", "-A", "-o", "json")
+    if rc != 0:
+        return CheckResult("cert-manager", False, "cannot list certificates")
+    try:
+        items = json.loads(stdout).get("items", [])
+    except json.JSONDecodeError:
+        return CheckResult("cert-manager", False, "bad JSON")
+    now = datetime.now(timezone.utc)
+    not_ready, expiring = [], []
+    for c in items:
+        name = c["metadata"]["namespace"] + "/" + c["metadata"]["name"]
+        st = c.get("status", {})
+        if not any(x.get("type") == "Ready" and x.get("status") == "True" for x in st.get("conditions", [])):
+            not_ready.append(name)
+            continue
+        na = st.get("notAfter")
+        if na:
+            try:
+                days = (datetime.fromisoformat(na.replace("Z", "+00:00")) - now).days
+                if days < warn_days:
+                    expiring.append(f"{name}({days}d)")
+            except ValueError:
+                pass
+    problems = []
+    if not_ready:
+        problems.append(f"{len(not_ready)} notReady")
+    if expiring:
+        problems.append(f"{len(expiring)} expiring<{warn_days}d")
+    if not problems:
+        return CheckResult(f"cert-manager ({len(items)} certs)", True)
+    return CheckResult("cert-manager", False, "; ".join(problems) + ": " + ", ".join((not_ready + expiring)[:2]))
+
+
+def check_monitoring() -> CheckResult:
+    """Prometheus + Grafana + Alertmanager. If monitoring is down, you are blind."""
+    targets = [
+        ("Prometheus", "statefulset", "prometheus-kps-prometheus"),
+        ("Grafana", "deployment", "kube-prometheus-stack-grafana"),
+        ("Alertmanager", "statefulset", "alertmanager-kps-alertmanager"),
+    ]
+    down = []
+    for label, kind, name in targets:
+        _, stdout, _ = run("kubectl", "get", kind, name, "-n", "monitoring", "-o", "jsonpath={.status.readyReplicas}")
+        if not ((stdout.strip() or "0").isdigit() and int(stdout.strip() or "0") >= 1):
+            down.append(label)
+    if not down:
+        return CheckResult("Monitoring stack", True)
+    return CheckResult("Monitoring stack", False, ", ".join(down) + " not ready")
+
+
+def check_http_app(name: str, host: str, path: str = "/", resolve_ip: str = "",
+                   accepted: tuple = ("200", "301", "302", "401", "403")) -> CheckResult:
+    """Functional HTTP probe of an app through the ingress (ArgoCD 'Healthy' != serving).
+    resolve_ip forces the internal ingress IP; accepted codes mean 'the app answered'."""
+    args = ["curl", "-sS", "--max-time", "10", "-k", "-o", "/dev/null", "-w", "%{http_code}"]
+    if resolve_ip:
+        args += ["--resolve", f"{host}:443:{resolve_ip}"]
+    args.append(f"https://{host}{path}")
+    _, stdout, _ = run(*args)
+    code = stdout.strip()
+    if code in accepted:
+        return CheckResult(name, True, f"HTTP {code}")
+    return CheckResult(name, False, f"HTTP {code or 'timeout'}")
+
+
+def check_controller_disk(threshold_pct: int = 90) -> CheckResult:
+    """Controller root-disk usage. 2026-08-18: disk full -> MinIO wedged -> DNS outage."""
+    rc, stdout, _ = run("df", "--output=pcent", "/")
+    pct = -1
+    if rc == 0:
+        for line in stdout.strip().splitlines():
+            s = line.strip().rstrip("%")
+            if s.isdigit():
+                pct = int(s)
+    if pct < 0:
+        return CheckResult("Controller disk", False, "df failed")
+    if pct < threshold_pct:
+        return CheckResult(f"Controller disk ({pct}%)", True)
+    return CheckResult(f"Controller disk ({pct}%)", False, f"> {threshold_pct}% threshold")
+
+
 def check_harbor() -> CheckResult:
     _, stdout, _ = run(
         "kubectl", "get", "deployment", "-n", "harbor", "harbor-core",
