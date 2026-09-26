@@ -102,6 +102,69 @@ def check_longhorn_volumes() -> CheckResult:
         return CheckResult("Longhorn volumes", False, str(exc)[:60])
 
 
+def check_node_resources(mem_pct_threshold: int = 92) -> CheckResult:
+    """Node memory/disk pressure. Two signals: (1) kubelet *Pressure conditions
+    (Memory/Disk/PID) — authoritative eviction signals; (2) memory usage over threshold
+    via metrics-server. 2026-09-26: fast-heron at 89% mem stalled Longhorn rebuilds and
+    cascaded — this is the check that would have surfaced that pressure early."""
+    problems: list[str] = []
+    rc, stdout, _ = run("kubectl", "get", "nodes", "-o", "json")
+    if rc == 0:
+        try:
+            for n in json.loads(stdout).get("items", []):
+                name = n["metadata"]["name"]
+                for c in n.get("status", {}).get("conditions", []):
+                    if c.get("type", "").endswith("Pressure") and c.get("status") == "True":
+                        problems.append(f"{name}:{c['type']}")
+        except (json.JSONDecodeError, KeyError):
+            pass
+    rc2, stdout2, _ = run("kubectl", "top", "nodes", "--no-headers")
+    if rc2 == 0:
+        for line in stdout2.strip().splitlines():
+            f = line.split()
+            if len(f) >= 5 and f[4].rstrip("%").isdigit() and int(f[4].rstrip("%")) >= mem_pct_threshold:
+                problems.append(f"{f[0]}:{f[4]} mem")
+    if not problems:
+        return CheckResult("Node resources", True)
+    sample = ", ".join(problems[:3]) + ("…" if len(problems) > 3 else "")
+    return CheckResult("Node resources", False, sample)
+
+
+def check_longhorn_instance_managers(min_schedulable: int = 3) -> CheckResult:
+    """Longhorn instance-managers + schedulable-node headroom. The volume check only
+    catches degraded/faulted volumes; it MISSED the 2026-09-26 iSCSI-wedge (volumes read
+    'healthy' while attaches failed) and the too-few-schedulable-nodes stall. This adds:
+    all IM pods Running + at least `min_schedulable` Longhorn nodes accepting replicas."""
+    rc, stdout, _ = run(
+        "kubectl", "get", "pods", "-n", "longhorn-system",
+        "-l", "longhorn.io/component=instance-manager", "--no-headers",
+    )
+    if rc != 0:
+        return CheckResult("Longhorn IMs", False, "kubectl failed")
+    lines = [l for l in stdout.strip().splitlines() if l]
+    not_running = [l.split()[0] for l in lines if "Running" not in l]
+    schedulable = 0
+    rc2, stdout2, _ = run(
+        "kubectl", "get", "nodes.longhorn.io", "-n", "longhorn-system", "-o", "json"
+    )
+    if rc2 == 0:
+        try:
+            schedulable = sum(
+                1 for n in json.loads(stdout2).get("items", [])
+                if n.get("spec", {}).get("allowScheduling")
+            )
+        except (json.JSONDecodeError, KeyError):
+            pass
+    problems: list[str] = []
+    if not_running:
+        problems.append(f"{len(not_running)} IM not Running")
+    if schedulable < min_schedulable:
+        problems.append(f"{schedulable} schedulable nodes (<{min_schedulable})")
+    if not problems:
+        return CheckResult(f"Longhorn IMs ({len(lines)} up, {schedulable} sched)", True)
+    return CheckResult("Longhorn IMs", False, "; ".join(problems))
+
+
 def check_pvcs() -> CheckResult:
     rc, stdout, _ = run("kubectl", "get", "pvc", "-A", "--no-headers")
     if rc != 0:
@@ -150,8 +213,12 @@ def check_postgres(namespace: str, pod: str) -> CheckResult:
 # ── Services ──────────────────────────────────────────────────────────────────
 
 def check_vault(url: str) -> CheckResult:
-    rc, stdout, _ = run("curl", "-fsS", "--max-time", "10", "-k", url)
-    if rc != 0:
+    # NOTE: no -f. Vault /sys/health returns non-2xx for perfectly valid states — a
+    # sealed/standby node returns 429/472/473/501 — so `curl -f` misreported a healthy HA
+    # STANDBY as "unreachable" (2026-09-26 false-flag). We judge health from the JSON body
+    # (initialized + not sealed), not the HTTP status. The ?standbyok URL also makes it 200.
+    rc, stdout, _ = run("curl", "-sS", "--max-time", "10", "-k", url)
+    if rc != 0 or not stdout.strip():
         return CheckResult("Vault", False, "unreachable")
     try:
         data = json.loads(stdout)
@@ -162,6 +229,39 @@ def check_vault(url: str) -> CheckResult:
         return CheckResult("Vault", True)
     except json.JSONDecodeError:
         return CheckResult("Vault", False, "bad JSON response")
+
+
+def check_authentik(url: str) -> CheckResult:
+    """Authentik SSO — the identity perimeter. Every app is behind Authentik OIDC, so if
+    it's up-but-broken every login fails while ArgoCD still shows the app Healthy. Probe
+    the health endpoint through the public ingress (exercises ingress + authentik)."""
+    _, stdout, _ = run(
+        "curl", "-fsS", "--max-time", "10", "-o", "/dev/null", "-w", "%{http_code}", url
+    )
+    code = stdout.strip()
+    if code in ("200", "204"):
+        return CheckResult("Authentik (SSO)", True)
+    # add a diagnostic hint: is the server deployment itself ready?
+    _, ready, _ = run(
+        "kubectl", "get", "deploy", "authentik-server", "-n", "authentik",
+        "-o", "jsonpath={.status.readyReplicas}",
+    )
+    dep = "deploy ready" if (ready.strip() or "0").isdigit() and int(ready.strip() or "0") >= 1 else "deploy NOT ready"
+    return CheckResult("Authentik (SSO)", False, f"HTTP {code or 'timeout'} ({dep})")
+
+
+def check_ingress_nginx(namespace: str, deployment: str) -> CheckResult:
+    """ingress-nginx controller — one down controller = all *.nip.io + public ingress dead."""
+    rc, stdout, _ = run(
+        "kubectl", "get", "deployment", deployment, "-n", namespace,
+        "-o", "jsonpath={.status.readyReplicas}/{.spec.replicas}",
+    )
+    parts = stdout.strip().split("/")
+    ready = int(parts[0]) if parts and parts[0].isdigit() else 0
+    want = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 0
+    if rc == 0 and ready >= 1:
+        return CheckResult("ingress-nginx", True, f"{ready}/{want} ready")
+    return CheckResult("ingress-nginx", False, f"{ready}/{want} ready")
 
 
 def check_harbor() -> CheckResult:

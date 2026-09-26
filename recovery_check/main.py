@@ -13,14 +13,18 @@ from datetime import datetime, timezone
 from . import config
 from .checks import (
     check_argocd_apps,
+    check_authentik,
     check_cloudflared,
     check_dns,
     check_harbor,
+    check_ingress_nginx,
     check_internet,
     check_k3s_backup_age,
     check_k3s_nodes,
+    check_longhorn_instance_managers,
     check_longhorn_volumes,
     check_minio_docker,
+    check_node_resources,
     check_postgres,
     check_public_endpoint,
     check_pvcs,
@@ -90,12 +94,16 @@ def main() -> int:
     results.append(check_dns())
     results.append(check_upstream_dns(config.UPSTREAM_DNS_SERVER, config.UPSTREAM_DNS_TEST_DOMAIN))
     results.append(check_k3s_nodes(config.EXPECTED_NODE_COUNT))
+    results.append(check_node_resources(config.NODE_MEM_PCT_THRESHOLD))
     results.append(check_longhorn_volumes())
+    results.append(check_longhorn_instance_managers(config.LONGHORN_MIN_SCHEDULABLE_NODES))
     results.append(check_pvcs())
     results.append(check_argocd_apps())
     for ns, pod in config.POSTGRES_INSTANCES:
         results.append(check_postgres(ns, pod))
     results.append(check_vault(config.VAULT_HEALTH_URL))
+    results.append(check_authentik(config.AUTHENTIK_HEALTH_URL))
+    results.append(check_ingress_nginx(config.INGRESS_NGINX_NAMESPACE, config.INGRESS_NGINX_DEPLOYMENT))
     results.append(check_harbor())
     results.append(check_minio_docker())
     results.append(check_cloudflared())
