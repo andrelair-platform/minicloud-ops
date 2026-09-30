@@ -11,6 +11,33 @@ Prometheus (via apiserver proxy) → control-chart z-score vs rolling baseline �
                                       through the normal chain (plan.md → PR → review → Kargo)
 ```
 
+## What is a "band"? (plain-language)
+
+A **band is the normal range for one number, plus a rule to shout when that number leaves
+the range.**
+
+**Fever analogy:** your temperature is normally ~37 °C. 36.5–37.5 is fine — that's the normal
+*band*. Hit 39 °C and you know something's wrong. Nobody handed you a rule "39 = sick"; you
+just know 37 is normal and 39 is far from it. A control band does exactly that for a number
+the platform produces.
+
+**A real one — `ingress_5xx_rate`** (server errors/sec): the detector watches it for a week and
+learns "normal ≈ 0, barely wiggles." That learned normal zone *is* the band. If errors jump to
+5/sec, that's miles outside → flag it.
+
+**Where the word comes from:** picture a chart with the average as a line down the middle and two
+more lines above and below it. The strip *between* those lines is the "band" — the zone of normal
+values. A dot inside = fine; a dot outside = flagged.
+
+**Why a band instead of a fixed threshold** ("alert if errors > 10")? Every number has a *different*
+normal — errors ~0, healthy nodes ~6, open P1s ~40. A fixed threshold means hand-picking (and
+re-picking) a magic number per metric. A band **learns each number's own normal automatically**,
+so you just say "watch this number" and it works out what "abnormal" means.
+
+**So concretely:** one band = **one number to watch** + which direction is bad (a rise, or a drop).
+When a number goes abnormal: a little → **log**; more → **write an `intent.md`**; way off → **open a
+GitHub issue**. "Add a band" = watch one more number (one entry in `bands.json`).
+
 ## Layout
 | File | Role |
 |---|---|
