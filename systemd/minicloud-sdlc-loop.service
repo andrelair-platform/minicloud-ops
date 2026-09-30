@@ -1,0 +1,12 @@
+[Unit]
+Description=Minicloud SDLC closing-the-loop detector (control-band anomaly -> intent.md/issue)
+After=k3s.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/minicloud-sdlc-loop
+User=ktayl
+Environment=KUBECONFIG=/home/ktayl/.kube/config
+Environment=HOME=/home/ktayl
+RemainAfterExit=no

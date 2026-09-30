@@ -10,7 +10,8 @@ requires-python = ">=3.10"
 
 [project.scripts]
 minicloud-recovery-check = "recovery_check.main:main"
+minicloud-sdlc-loop = "sdlc_loop.main:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["recovery_check*"]
+include = ["recovery_check*", "sdlc_loop*"]

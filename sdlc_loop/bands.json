@@ -1,0 +1,27 @@
+{
+  "prometheus": { "namespace": "monitoring", "service": "kps-prometheus", "port": 9090 },
+  "baseline":   { "window": "7d", "step": "1h", "min_samples": 12 },
+  "sigmas":     [1.0, 2.0, 3.0],
+  "github":     { "repo": "andrelair-platform/minicloud-gitops", "open_issue_from_tier": 3 },
+  "intent_dir": "~/minicloud-ops-intents",
+  "bands": [
+    {
+      "name": "pod_restarts_1h",
+      "description": "Cluster-wide container restarts in the last hour",
+      "query": "sum(increase(kube_pod_container_status_restarts_total[1h]))",
+      "direction": "high"
+    },
+    {
+      "name": "ingress_5xx_rate",
+      "description": "Ingress-nginx 5xx responses per second",
+      "query": "sum(rate(nginx_ingress_controller_requests{status=~\"5..\"}[5m]))",
+      "direction": "high"
+    },
+    {
+      "name": "nodes_ready",
+      "description": "Number of Ready k3s nodes (alerts on a DROP)",
+      "query": "count(kube_node_status_condition{condition=\"Ready\",status=\"true\"} == 1)",
+      "direction": "low"
+    }
+  ]
+}
