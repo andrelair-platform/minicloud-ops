@@ -31,8 +31,8 @@
     },
     {
       "name": "rollout_failures",
-      "description": "Argo Rollouts currently in a Degraded/Error phase (DORA change-failure signal) — alerts when a canary/blue-green rollout aborts on its health gate. `or vector(0)` keeps a continuous 0 baseline so a jump to nonzero fires.",
-      "query": "count(rollout_info{phase=~\"Degraded|Error\"}) or vector(0)",
+      "description": "Argo Rollouts in a failing phase (DORA change-failure signal) — a canary/blue-green that aborts on its health gate or exceeds its progress deadline. NOTE: rollout_info reports these as Degraded/Error/Timeout/Aborted (healthy = Completed); ProgressDeadlineExceeded shows as Timeout. `or vector(0)` keeps a continuous 0 baseline so a jump to nonzero fires.",
+      "query": "count(rollout_info{phase=~\"Degraded|Error|Timeout|Aborted\"}) or vector(0)",
       "direction": "high"
     }
   ]
