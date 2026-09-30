@@ -24,8 +24,8 @@ Prometheus (via apiserver proxy) → control-chart z-score vs rolling baseline �
 Each band: `name`, `query` (PromQL that aggregates to one series), `direction`
 (`high` = alert on a rise, `low` = alert on a drop, `both`). Baseline = a rolling
 `window`/`step` range; a value beyond 1/2/3σ (in the bad direction) escalates.
-Seed bands: `pod_restarts_1h`, `ingress_5xx_rate`, `nodes_ready` (reliability) +
-`open_p1_items` (delivery-flow, from the ghproj-exporter — open P1 work across all boards).
+Seed bands: `pod_restarts_1h`, `ingress_5xx_rate`, `nodes_ready`, `rollout_failures`
+(reliability / DORA change-failure) + `open_p1_items` (delivery-flow, from the ghproj-exporter).
 
 ## Run
 ```bash
