@@ -22,6 +22,12 @@
       "description": "Number of Ready k3s nodes (alerts on a DROP)",
       "query": "count(kube_node_status_condition{condition=\"Ready\",status=\"true\"} == 1)",
       "direction": "low"
+    },
+    {
+      "name": "open_p1_items",
+      "description": "Open P1 (critical) work items across all product boards (ghproj-exporter) — a delivery-flow band: alerts on a pile-up (a filing burst, or a stall in closing critical work)",
+      "query": "sum(ghproj_items{priority=\"P1\",status!=\"Done\"})",
+      "direction": "high"
     }
   ]
 }
