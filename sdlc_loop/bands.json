@@ -28,6 +28,12 @@
       "description": "Open P1 (critical) work items across all product boards (ghproj-exporter) — a delivery-flow band: alerts on a pile-up (a filing burst, or a stall in closing critical work)",
       "query": "sum(ghproj_items{priority=\"P1\",status!=\"Done\"})",
       "direction": "high"
+    },
+    {
+      "name": "rollout_failures",
+      "description": "Argo Rollouts currently in a Degraded/Error phase (DORA change-failure signal) — alerts when a canary/blue-green rollout aborts on its health gate. `or vector(0)` keeps a continuous 0 baseline so a jump to nonzero fires.",
+      "query": "count(rollout_info{phase=~\"Degraded|Error\"}) or vector(0)",
+      "direction": "high"
     }
   ]
 }
