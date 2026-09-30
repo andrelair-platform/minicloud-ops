@@ -1,0 +1,10 @@
+[Unit]
+Description=Run the SDLC closing-the-loop detector hourly (control-band -> intent.md)
+
+[Timer]
+OnCalendar=*-*-* *:07:00
+Persistent=true
+RandomizedDelaySec=120
+
+[Install]
+WantedBy=timers.target
