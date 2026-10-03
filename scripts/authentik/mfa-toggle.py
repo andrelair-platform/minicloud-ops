@@ -33,18 +33,21 @@ validate_stage_ids = set(AuthenticatorValidateStage.objects.values_list("stage_p
 flows = Flow.objects.filter(designation="authentication")
 
 changed = []
+want_skip = not enabled  # the skip policy is ACTIVE when MFA should be OFF
 for flow in flows:
     for binding in FlowStageBinding.objects.filter(target=flow):
         if binding.stage_id in validate_stage_ids:
             pb, _ = PolicyBinding.objects.get_or_create(
-                policy=skip_policy, target=binding, defaults=dict(order=0)
+                policy=skip_policy, target=binding, defaults=dict(order=0, enabled=want_skip)
             )
-            # skip policy is ENABLED when MFA should be DISABLED
-            want = not enabled
-            if pb.enabled != want:
-                pb.enabled = want
-                pb.save()
-                changed.append(f"{flow.slug}:{binding.stage}")
+            pb.enabled = want_skip
+            pb.save()
+            # The skip ("return False") only short-circuits the stage under engine_mode=all. Use "all"
+            # while skipping; restore "any" when re-enabling (equivalent to the original once the skip
+            # policy is disabled, since only the default validate policy then remains).
+            binding.policy_engine_mode = "all" if want_skip else "any"
+            binding.save()
+            changed.append(f"{flow.slug}:{binding.stage} skip={want_skip} mode={binding.policy_engine_mode}")
 
 print(f"MFA_CHANGED={len(changed)} MFA_ENABLED={enabled}")
 for c in changed:
