@@ -30,6 +30,7 @@ PILOTS = {
     "RH": "Direction RH",
     "Juridique": "Direction Juridique & Compliance",
     "Underwriting": "Direction Souscription",
+    "IT / Security / DORA": "Direction IT / SI",
 }
 ADMIN_ROLE = "authentik Admins"  # owner's group -> admin-equivalent role
 

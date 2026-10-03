@@ -39,7 +39,9 @@ SHELVES = [
     ("Corporate / Direction", "Corporate / Direction — gouvernance d'entreprise, délégations"),
 ]
 
-PILOTS = ["RH", "Juridique", "Underwriting"]
+# Shelves that get a governance book now (need-first: the 3 Phase-1 pilots + IT/Security/DORA for the
+# live platform/IS capabilities annotated in Backstage). Others get a book when a live capability maps to them.
+PILOTS = ["RH", "Juridique", "Underwriting", "IT / Security / DORA"]
 
 # the 5-level documentation hierarchy (§6) — template pages seeded in each pilot's governance book
 HIERARCHY = [
