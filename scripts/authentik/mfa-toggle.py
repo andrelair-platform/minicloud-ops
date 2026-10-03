@@ -15,9 +15,19 @@ Output markers (captured by the runner):
 import os
 
 from authentik.flows.models import Flow, FlowStageBinding
+from authentik.policies.expression.models import ExpressionPolicy
+from authentik.policies.models import PolicyBinding
 from authentik.stages.authenticator_validate.models import AuthenticatorValidateStage
 
 enabled = os.environ.get("MFA_ENABLED", "true").lower() in ("1", "true", "yes", "on")
+
+# FlowStageBinding has no `enabled` flag, so toggle MFA by (un)applying a "return False" policy on the
+# Authenticator Validation stage binding(s). Policy enabled -> stage skipped -> MFA off. Fully reversible;
+# never deletes a stage binding or a TOTP device.
+skip_policy, _ = ExpressionPolicy.objects.get_or_create(
+    name="skip-mfa-global",
+    defaults=dict(expression="return False"),
+)
 
 validate_stage_ids = set(AuthenticatorValidateStage.objects.values_list("stage_ptr_id", flat=True))
 flows = Flow.objects.filter(designation="authentication")
@@ -25,10 +35,16 @@ flows = Flow.objects.filter(designation="authentication")
 changed = []
 for flow in flows:
     for binding in FlowStageBinding.objects.filter(target=flow):
-        if binding.stage_id in validate_stage_ids and binding.enabled != enabled:
-            binding.enabled = enabled
-            binding.save()
-            changed.append(f"{flow.slug}:{binding.stage}")
+        if binding.stage_id in validate_stage_ids:
+            pb, _ = PolicyBinding.objects.get_or_create(
+                policy=skip_policy, target=binding, defaults=dict(order=0)
+            )
+            # skip policy is ENABLED when MFA should be DISABLED
+            want = not enabled
+            if pb.enabled != want:
+                pb.enabled = want
+                pb.save()
+                changed.append(f"{flow.slug}:{binding.stage}")
 
 print(f"MFA_CHANGED={len(changed)} MFA_ENABLED={enabled}")
 for c in changed:
