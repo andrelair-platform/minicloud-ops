@@ -28,7 +28,9 @@ $t=new \BookStack\Api\ApiToken();$t->user_id=$u->id;$t->name="content-bootstrap"
 $t->token_id=\Illuminate\Support\Str::random(32);$s=\Illuminate\Support\Str::random(32);
 $t->secret=\Illuminate\Support\Facades\Hash::make($s);$t->expires_at=now()->addYears(5);$t->save();
 echo "APITOKEN=".$t->token_id.":".$s;'
-OUT=$(printf '%s' "$PHP" | kubectl exec -i -n "$NS" "$POD" -c bookstack -- php /app/www/artisan tinker 2>/dev/null)
+# HOME=/tmp: readOnlyRootFilesystem makes /root unwritable, and PsySH (tinker) refuses to start if it
+# can't write its config/history dir — point HOME at the writable /tmp emptyDir.
+OUT=$(printf '%s' "$PHP" | kubectl exec -i -n "$NS" "$POD" -c bookstack -- env HOME=/tmp php /app/www/artisan tinker 2>&1)
 TOKEN=$(printf '%s' "$OUT" | sed -n 's/.*APITOKEN=\([A-Za-z0-9]*:[A-Za-z0-9]*\).*/\1/p' | head -1)
 [ -n "$TOKEN" ] || { echo "ERROR: token not created:"; echo "$OUT"; exit 1; }
 
