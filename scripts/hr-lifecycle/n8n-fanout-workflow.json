@@ -115,7 +115,9 @@
       "position": [
         1120,
         300
-      ]
+      ],
+      "onError": "continueRegularOutput",
+      "continueOnFail": true
     },
     {
       "parameters": {

@@ -9,9 +9,13 @@
 # NEVER echoed to the terminal or placed in argv. (Earlier versions wrote the k8s Secret directly;
 # that secret is now ESO-managed, so writing it here would fight ESO ownership — write Vault instead.)
 #
-# GLPI stores all of this in its MariaDB (config = glpi_configs, clients = glpi_apiclients, the user
-# token = glpi_users.api_token) — so this is an idempotent SQL upsert, reproducible after a DB restore,
-# not UI click-ops (same pattern as configure-sso-provider.sh).
+# CRITICAL — GLPI 10 stores API tokens ENCRYPTED and the API ALWAYS runs GLPIKey::decrypt() on the
+# stored app_token / user api_token before comparing (src/Api/API.php checkAppToken + User::getFromDBbyToken),
+# UNCONDITIONALLY (regardless of the are_apiclients_tokens_encrypted config). So a raw-SQL *plaintext*
+# token is rejected (ERROR_WRONG_APP_TOKEN_PARAMETER / ERROR_GLPI_LOGIN_USER_TOKEN). We therefore store
+# GLPIKey::encrypt(plaintext) in GLPI (via a PHP snippet in the glpi pod) and the PLAINTEXT in Vault
+# (what n8n sends). Vault is the token source of truth → re-running after a GLPI DB rebuild re-encrypts
+# the same plaintext back into GLPI. (Learned 2026-10-05, HR-12 fan-out.)
 #
 # RUN ON THE CONTROLLER. Requires kubectl (itsm ns), curl, python3, age, and the Vault root token
 # (decrypted from ~/.vault-root-token.age via the age identity in Vault secret/platform/k3s-backup-age,
@@ -37,31 +41,7 @@ run "UPDATE glpi_configs SET value='1' WHERE name='enable_api';"
 run "UPDATE glpi_configs SET value='1' WHERE name='enable_api_login_external_token';"
 echo "enable_api=$(run "SELECT value FROM glpi_configs WHERE name='enable_api';")  login_external_token=$(run "SELECT value FROM glpi_configs WHERE name='enable_api_login_external_token';")"
 
-# 2. an unrestricted active apiclient with an app_token (create once; reuse its token on re-run)
-APP_TOKEN=$(run "SELECT app_token FROM glpi_apiclients WHERE name='$CLIENT_NAME' LIMIT 1;")
-if [ -z "$APP_TOKEN" ]; then
-  APP_TOKEN=$(openssl rand -hex 20)   # GLPI tokens are 40 hex chars
-  run "INSERT INTO glpi_apiclients
-        (entities_id,is_recursive,name,is_active,ipv4_range_start,ipv4_range_end,app_token,app_token_date,dolog_method,date_creation,date_mod)
-       VALUES (0,1,'$CLIENT_NAME',1,NULL,NULL,'$APP_TOKEN',NOW(),0,NOW(),NOW());"
-  echo "created apiclient '$CLIENT_NAME' (unrestricted, active)"
-else
-  run "UPDATE glpi_apiclients SET is_active=1, ipv4_range_start=NULL, ipv4_range_end=NULL WHERE name='$CLIENT_NAME';"
-  echo "apiclient '$CLIENT_NAME' already exists (ensured active + unrestricted)"
-fi
-
-# 3. a user-level api_token on the service user (reuse if present)
-USER_TOKEN=$(run "SELECT api_token FROM glpi_users WHERE name='$API_USER' AND api_token IS NOT NULL AND api_token<>'' LIMIT 1;")
-if [ -z "$USER_TOKEN" ]; then
-  USER_TOKEN=$(openssl rand -hex 20)
-  run "UPDATE glpi_users SET api_token='$USER_TOKEN', api_token_date=NOW() WHERE name='$API_USER';"
-  echo "minted api_token for user '$API_USER'"
-else
-  echo "user '$API_USER' already has an api_token (reused)"
-fi
-
-# 4. write both tokens into Vault secret/<VAULT_PATH> (never echoed). GLPI in-cluster base =
-#    http://glpi.<ns>.svc. ESO (ExternalSecret n8n-hr-glpi) renders the k8s Secret from here.
+# 2. decrypt the Vault root token (age chain) — needed to read/write Vault
 API_URL="http://glpi.${NS}.svc/apirest.php"
 OPS=$(cat ~/.vault-ops-token)
 AGE_ID=$(/usr/bin/curl -s --cacert "$VCA" -H "X-Vault-Token: $OPS" \
@@ -69,7 +49,20 @@ AGE_ID=$(/usr/bin/curl -s --cacert "$VCA" -H "X-Vault-Token: $OPS" \
   | python3 -c 'import sys,json; print(json.load(sys.stdin)["data"]["data"]["identity"])')
 ROOT=$(printf '%s' "$AGE_ID" | ~/.local/bin/age -d -i /dev/stdin ~/.vault-root-token.age)
 [ -n "$ROOT" ] || { echo "ERROR: could not decrypt Vault root token" >&2; exit 1; }
-# merge-safe write (overwrites the three keys at the path; GLPI DB remains the token source of truth)
+
+# 3. determine the PLAINTEXT tokens — Vault is the source of truth (reuse if present, else generate).
+#    (We must NOT read them back from GLPI: GLPI stores them encrypted — see the header note.)
+read_vault() { # $1=property -> value or empty
+  /usr/bin/curl -s --cacert "$VCA" -H "X-Vault-Token: $ROOT" "$VADDR/v1/secret/data/$VAULT_PATH" \
+    | python3 -c "import sys,json
+try:
+  d=json.load(sys.stdin)['data']['data']; print(d.get('$1',''))
+except Exception: print('')"
+}
+APP_TOKEN=$(read_vault app-token); [ -n "$APP_TOKEN" ] || APP_TOKEN=$(openssl rand -hex 20)
+USER_TOKEN=$(read_vault user-token); [ -n "$USER_TOKEN" ] || USER_TOKEN=$(openssl rand -hex 20)
+
+# 4. write the PLAINTEXT tokens to Vault (what n8n sends; ESO renders automation/n8n-hr-glpi from here)
 VADDR="$VADDR" VCA="$VCA" ROOT="$ROOT" VPATH="$VAULT_PATH" \
 APP_TOKEN="$APP_TOKEN" USER_TOKEN="$USER_TOKEN" API_URL="$API_URL" python3 - <<'PY'
 import os,json,ssl,urllib.request
@@ -81,5 +74,37 @@ req=urllib.request.Request(f"{os.environ['VADDR']}/v1/secret/data/{os.environ['V
 urllib.request.urlopen(req,context=ctx).read()
 PY
 echo "wrote Vault secret/$VAULT_PATH (app-token, user-token, api-url) — tokens not printed"
-echo "ESO ExternalSecret n8n-hr-glpi will render the k8s Secret from Vault (refresh ~1h; force: kubectl -n automation delete externalsecret n8n-hr-glpi --wait=false then re-sync)."
-echo "GLPI API enabled + credentials provisioned."
+
+# 5. store the tokens in GLPI as GLPIKey-ENCRYPTED values (GLPI decrypts them to compare). Done in a
+#    PHP snippet inside the glpi pod (needs GLPIKey + the crypt key); plaintext passed via env, not argv.
+GLPIPOD=$(kubectl get pod -n "$NS" -l app=glpi -o jsonpath='{.items[0].metadata.name}')
+[ -n "$GLPIPOD" ] || { echo "ERROR: no glpi pod in ns $NS" >&2; exit 1; }
+cat <<'PHP' | kubectl exec -i "$GLPIPOD" -c glpi -n "$NS" -- sh -c 'cat > /tmp/glpi-enc.php'
+<?php
+define('GLPI_ROOT', '/var/www/glpi'); chdir(GLPI_ROOT);
+include GLPI_ROOT . '/inc/includes.php';
+global $DB;
+$k = new GLPIKey();
+$app = getenv('APP_PLAIN'); $usr = getenv('USER_PLAIN');
+$client = getenv('CLIENT'); $apiuser = getenv('APIUSER');
+$now = date('Y-m-d H:i:s');
+$row = $DB->request(['SELECT'=>['id'],'FROM'=>'glpi_apiclients','WHERE'=>['name'=>$client]])->current();
+if ($row) {
+    $DB->update('glpi_apiclients', ['is_active'=>1,'ipv4_range_start'=>null,'ipv4_range_end'=>null,'ipv6'=>null,'app_token'=>$k->encrypt($app),'app_token_date'=>$now], ['id'=>$row['id']]);
+    echo "apiclient '$client' updated (active, unrestricted, encrypted app_token)\n";
+} else {
+    $DB->insert('glpi_apiclients', ['entities_id'=>0,'is_recursive'=>1,'name'=>$client,'is_active'=>1,'ipv4_range_start'=>null,'ipv4_range_end'=>null,'app_token'=>$k->encrypt($app),'app_token_date'=>$now,'dolog_method'=>0,'date_creation'=>$now,'date_mod'=>$now]);
+    echo "apiclient '$client' created (active, unrestricted, encrypted app_token)\n";
+}
+$u = $DB->request(['SELECT'=>['id'],'FROM'=>'glpi_users','WHERE'=>['name'=>$apiuser]])->current();
+if (!$u) { fwrite(STDERR, "ERROR: GLPI user '$apiuser' not found\n"); exit(1); }
+$DB->update('glpi_users', ['api_token'=>$k->encrypt($usr),'api_token_date'=>$now], ['id'=>$u['id']]);
+echo "user '$apiuser' api_token set (encrypted)\n";
+PHP
+kubectl exec "$GLPIPOD" -c glpi -n "$NS" -- env APP_PLAIN="$APP_TOKEN" USER_PLAIN="$USER_TOKEN" CLIENT="$CLIENT_NAME" APIUSER="$API_USER" php /tmp/glpi-enc.php
+kubectl exec "$GLPIPOD" -c glpi -n "$NS" -- rm -f /tmp/glpi-enc.php
+# clear GLPI cache so it re-reads (config/clients)
+kubectl exec "$GLPIPOD" -c glpi -n "$NS" -- sh -c 'cd /var/www/glpi && php bin/console cache:clear >/dev/null 2>&1' || true
+
+echo "ESO ExternalSecret n8n-hr-glpi renders automation/n8n-hr-glpi from Vault (force: kubectl -n automation delete secret n8n-hr-glpi — ESO recreates)."
+echo "GLPI API enabled + credentials provisioned (GLPIKey-encrypted in GLPI, plaintext in Vault)."
