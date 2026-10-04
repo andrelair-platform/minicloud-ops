@@ -1,0 +1,100 @@
+{
+  "name": "HR-12 — J/M/L non-access fan-out",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hr-lifecycle",
+        "responseMode": "responseNode",
+        "options": { "rawBody": true }
+      },
+      "id": "wh-hr-lifecycle",
+      "name": "Webhook (hr.lifecycle)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "hr-lifecycle"
+    },
+    {
+      "parameters": {
+        "jsBuiltIn": "crypto",
+        "jsCode": "// HR-12 fan-out — verify the HMAC signature over the EXACT raw body ERPNext signed\n// (canonical JSON, sorted keys, no spaces), then shape the GLPI ticket + email text.\nconst crypto = require('crypto');\nconst item = items[0];\n// raw body: n8n puts the unparsed body on binary when rawBody=true, else on json.body\nlet raw = '';\nif (item.binary && item.binary.data) {\n  raw = Buffer.from(item.binary.data.data, 'base64').toString('utf8');\n} else if (typeof item.json.body === 'string') {\n  raw = item.json.body;\n} else {\n  raw = JSON.stringify(item.json.body || item.json);\n}\nconst headers = item.json.headers || {};\nconst got = headers['x-hr-signature'] || headers['X-HR-Signature'] || '';\nconst key = $env.HR_LIFECYCLE_SIGNING_KEY || '';\nif (key) {\n  const want = crypto.createHmac('sha256', key).update(raw, 'utf8').digest('hex');\n  const ok = got && got.length === want.length && crypto.timingSafeEqual(Buffer.from(got), Buffer.from(want));\n  if (!ok) { throw new Error('HR-12 fan-out: HMAC signature mismatch — refusing to fan out'); }\n}\nconst ev = JSON.parse(raw);\nconst s = ev.subject || {};\nconst titles = { joiner: 'Provision software access (Joiner)', mover: 'Review software access (Mover)', leaver: 'Deprovision software access (Leaver)' };\nconst title = `[HR ${ev.event}] ${s.matricule || '?'} ${s.employee_name || ''} — ${titles[ev.event] || ev.event}`;\nconst content = `Lifecycle event: ${ev.event}\\nMatricule: ${s.matricule}\\nName: ${s.employee_name}\\nEmail: ${s.email}\\nJob: ${s.job}\\nDepartment: ${s.department}\\nEntity: ${s.entity}\\nCountry: ${s.country}\\nEffective: ${ev.effective_date}\\nOccurred: ${ev.occurred_at}\\nChange: ${JSON.stringify(ev.change || {})}\\n\\nNOTE: software/service provisioning only — NO hardware (BYOD). Access (Authentik groups) is handled by ktayl-iam, not here.`;\nreturn [{ json: { event: ev.event, title, content, matricule: s.matricule, email: s.email } }];"
+      },
+      "id": "code-verify",
+      "name": "Verify HMAC + shape",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.GLPI_API_URL }}/initSession",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [
+          { "name": "Authorization", "value": "=user_token {{ $env.GLPI_USER_TOKEN }}" },
+          { "name": "App-Token", "value": "={{ $env.GLPI_APP_TOKEN }}" }
+        ] },
+        "options": {}
+      },
+      "id": "glpi-init",
+      "name": "GLPI initSession",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GLPI_API_URL }}/Ticket",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [
+          { "name": "Session-Token", "value": "={{ $json.session_token }}" },
+          { "name": "App-Token", "value": "={{ $env.GLPI_APP_TOKEN }}" },
+          { "name": "Content-Type", "value": "application/json" }
+        ] },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ input: { name: $('Verify HMAC + shape').item.json.title, content: $('Verify HMAC + shape').item.json.content, type: 2 } }) }}",
+        "options": {}
+      },
+      "id": "glpi-ticket",
+      "name": "GLPI create Ticket",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "n8n@devandre.sbs",
+        "toEmail": "it@devandre.sbs",
+        "subject": "={{ 'HR lifecycle: ' + $('Verify HMAC + shape').item.json.event + ' — ' + $('Verify HMAC + shape').item.json.matricule }}",
+        "emailFormat": "text",
+        "text": "={{ $('Verify HMAC + shape').item.json.content }}",
+        "options": {}
+      },
+      "id": "email-notify",
+      "name": "Notify (email)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": { "respondWith": "text", "responseBody": "ok", "options": {} },
+      "id": "respond",
+      "name": "Respond 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1340, 300]
+    }
+  ],
+  "connections": {
+    "Webhook (hr.lifecycle)": { "main": [[{ "node": "Verify HMAC + shape", "type": "main", "index": 0 }]] },
+    "Verify HMAC + shape": { "main": [[{ "node": "GLPI initSession", "type": "main", "index": 0 }]] },
+    "GLPI initSession": { "main": [[{ "node": "GLPI create Ticket", "type": "main", "index": 0 }]] },
+    "GLPI create Ticket": { "main": [[{ "node": "Notify (email)", "type": "main", "index": 0 }]] },
+    "Notify (email)": { "main": [[{ "node": "Respond 200", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "active": false
+}
