@@ -30,6 +30,7 @@ from .checks import (
     check_minio_docker,
     check_monitoring,
     check_node_resources,
+    check_mount_writable,
     check_postgres,
     check_public_endpoint,
     check_pvcs,
@@ -103,6 +104,8 @@ def main() -> int:
     results.append(check_longhorn_volumes())
     results.append(check_longhorn_instance_managers(config.LONGHORN_MIN_SCHEDULABLE_NODES))
     results.append(check_pvcs())
+    for _label, _ns, _tgt, _path in config.MOUNT_WRITABLE_PROBES:
+        results.append(check_mount_writable(_label, _ns, _tgt, _path))
     results.append(check_argocd_apps())
     for ns, pod in config.POSTGRES_INSTANCES:
         results.append(check_postgres(ns, pod))

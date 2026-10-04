@@ -176,6 +176,22 @@ def check_pvcs() -> CheckResult:
     return CheckResult(f"PVCs ({len(lines)} total)", False, f"{len(unbound)} not Bound")
 
 
+def check_mount_writable(label: str, namespace: str, target: str, path: str) -> CheckResult:
+    """Probe that a workload's volume MOUNT is actually writable — not just Longhorn-healthy.
+
+    A Longhorn volume can report state=attached robustness=healthy while its kernel mount on the node
+    is wedged read-only / I/O-errored after pod churn (Errno 5). A volume-health check can't see that;
+    it only surfaces downstream as an app 500. This writes+removes a temp file in the pod to catch it.
+    (2026-10-04: an ERPNext RWO sites-mount wedge showed Longhorn OK but ERPNext HTTP 500.)
+    """
+    probe = f"touch {path}/.rwprobe && rm -f {path}/.rwprobe"
+    rc, _, stderr = run("kubectl", "exec", "-n", namespace, target, "--", "sh", "-c", probe)
+    if rc == 0:
+        return CheckResult(label, True)
+    detail = stderr.strip().splitlines()[-1][:60] if stderr.strip() else f"exit={rc}"
+    return CheckResult(label, False, detail)
+
+
 def check_argocd_apps() -> CheckResult:
     rc, stdout, _ = run(
         "kubectl", "get", "application", "-n", "argocd", "-o", "json"

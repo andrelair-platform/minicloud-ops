@@ -45,6 +45,13 @@ FLAGSHIP_PROBES: list[tuple[str, str, str, str]] = [
     ("ERPNext", "erp.devandre.sbs", "/", ""),
 ]
 
+# Mount-writability probes (label, namespace, kubectl target, path) — catch a wedged/read-only
+# volume MOUNT that Longhorn still reports healthy (surfaces only as a downstream app 500 otherwise;
+# 2026-10-04 ERPNext RWO sites-mount wedge). The probe writes+removes a temp file inside the pod.
+MOUNT_WRITABLE_PROBES: list[tuple[str, str, str, str]] = [
+    ("ERPNext sites mount", "erp", "deploy/erpnext-gunicorn", "/home/frappe/frappe-bench/sites"),
+]
+
 # Controller MAAS bind9 upstream. CoreDNS forwards external queries here;
 # if bind9 (10.0.0.1:53) is down the whole cluster loses external DNS while
 # check_dns() still passes (kubernetes.default resolves internally).
