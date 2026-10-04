@@ -71,7 +71,7 @@
         "subject": "={{ 'HR lifecycle: ' + $('Verify HMAC + shape').item.json.event + ' — ' + $('Verify HMAC + shape').item.json.matricule }}",
         "emailFormat": "text",
         "text": "={{ $('Verify HMAC + shape').item.json.content }}",
-        "options": {}
+        "options": { "allowUnauthorizedCerts": true }
       },
       "id": "email-notify",
       "name": "Notify (email)",
