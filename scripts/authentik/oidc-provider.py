@@ -11,6 +11,8 @@ Inputs (environment variables):
   AK_APP_NAME       required  the application display name (e.g. "BookStack")
   AK_REDIRECT_URIS  required  comma- or newline-separated strict redirect URIs
   AK_ADD_GROUPS     optional  "1" (default) also create/attach a `groups` scope mapping -> groups claim
+  AK_GRANT_TYPES    optional  comma/newline list (default "authorization_code,refresh_token"); a web
+                              OIDC app needs authorization_code or authorize rejects the browser flow
 
 Output (stdout markers, captured by the caller — never echo the secret elsewhere):
   CLIENTID=<client_id>
@@ -31,6 +33,10 @@ slug = os.environ["AK_APP_SLUG"]
 name = os.environ["AK_APP_NAME"]
 redirects = [u.strip() for u in os.environ["AK_REDIRECT_URIS"].replace(",", "\n").splitlines() if u.strip()]
 add_groups = os.environ.get("AK_ADD_GROUPS", "1") == "1"
+# grant_types defaults to [] on a NEW provider in Authentik 2026.x → the authorize view then rejects
+# the browser flow with "Invalid grant_type for provider". A standard web OIDC app needs
+# authorization_code (+ refresh_token). Settable via AK_GRANT_TYPES (comma/newline list).
+grant_types = [g.strip() for g in os.environ.get("AK_GRANT_TYPES", "authorization_code,refresh_token").replace(",", "\n").splitlines() if g.strip()]
 if not redirects:
     raise SystemExit("AK_REDIRECT_URIS is empty")
 
@@ -57,6 +63,10 @@ prov, _ = OAuth2Provider.objects.get_or_create(
 prov.authorization_flow = authz
 prov.signing_key = signing
 prov.client_type = "confidential"  # enum name varies across versions; the stored value is stable
+try:
+    prov.grant_types = grant_types  # ArrayField of GrantTypes string values; raw strings are stable
+except Exception:
+    pass
 # redirect_uris schema differs across versions: new = list[RedirectURI], old = newline string
 try:
     from authentik.providers.oauth2.models import RedirectURI, RedirectURIMatchingMode
