@@ -54,7 +54,9 @@ DBPASS=$(kubectl get secret "$DB_SECRET" -n "$NS" -o jsonpath='{.data.db-passwor
 #    so we check-then-insert/update). SQL is piped over stdin; creds never hit argv. MYSQL_PWD via env.
 #    type='generic' makes the plugin use the stored url_* + scope verbatim; use_email_for_login=1 keys
 #    the GLPI account off the OIDC email (clean SSO login + auto-provision on first sign-in).
-run_sql() { kubectl exec -i "$MPOD" -n "$NS" --env="MYSQL_PWD=$DBPASS" -- mariadb -uglpi glpi -N "$@" 2>/dev/null; }
+# kubectl exec has no --env; set MYSQL_PWD inside the container via `env` (keeps it out of the
+# mariadb argv → no "password on the command line is insecure" warning, and off the host argv list).
+run_sql() { kubectl exec -i "$MPOD" -n "$NS" -- env MYSQL_PWD="$DBPASS" mariadb -uglpi glpi -N "$@"; }
 
 # SQL-escape single quotes in values
 esc() { printf '%s' "$1" | sed "s/'/''/g"; }
