@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Grant an Authentik service account a least-privilege group-management permission set, by piping
-# grant-service-group-perms.py into `ak shell`. Default perms = view_user,view_group,add_group,
-# change_group (enough to create groups + add/remove members; nothing else — threat T4).
+# grant-service-group-perms.py into `ak shell`. Default perms = view_user, view_group, add_group,
+# change_group, add_user_to_group, remove_user_from_group — enough to create governance groups +
+# add/remove members, and NOTHING else (no delete_group, no user mutation — threat T4). NB: group
+# membership needs the DEDICATED add_user_to_group/remove_user_from_group perms, NOT change_group.
 #
 # Usage:  scripts/authentik/grant-service-group-perms.sh <svc-username> [perm,perm,...]
 # Example: scripts/authentik/grant-service-group-perms.sh ktayl-iam-svc

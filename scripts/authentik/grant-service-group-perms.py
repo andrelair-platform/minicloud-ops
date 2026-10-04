@@ -16,7 +16,7 @@ Inputs (environment variables):
   AK_SVC_USERNAME  required  the service-account username (e.g. "ktayl-iam-svc")
   AK_ROLE_NAME     optional  role name (default "<svc>-group-manager")
   AK_PERMS         optional  comma list of authentik_core codenames
-                             (default: view_user,view_group,add_group,change_group)
+                             (default: view_user,view_group,add_group,change_group,add_user_to_group,remove_user_from_group)
 
 Output (stdout): the role/group binding + perms + DONE=1.
 
@@ -31,7 +31,7 @@ username = os.environ["AK_SVC_USERNAME"]
 role_name = os.environ.get("AK_ROLE_NAME", f"{username}-group-manager")
 codenames = [
     c.strip()
-    for c in os.environ.get("AK_PERMS", "view_user,view_group,add_group,change_group").split(",")
+    for c in os.environ.get("AK_PERMS", "view_user,view_group,add_group,change_group,add_user_to_group,remove_user_from_group").split(",")
     if c.strip()
 ]
 perms = [f"authentik_core.{c}" for c in codenames]
