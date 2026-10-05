@@ -8,6 +8,11 @@
 # Usage:  scripts/authentik/grant-service-group-perms.sh <svc-username> [perm,perm,...]
 # Example: scripts/authentik/grant-service-group-perms.sh ktayl-iam-svc
 #
+# NOTE — perms are the 2nd POSITIONAL arg, not an env var. S017 (Leaver) additionally needs
+# `change_user` so ktayl-iam can DISABLE a leaver's Authentik account (is_active=false). Grant it:
+#   scripts/authentik/grant-service-group-perms.sh ktayl-iam-svc \
+#     'view_user,view_group,add_group,change_group,add_user_to_group,remove_user_from_group,change_user'
+#
 # Requires: kubectl context with access to the `authentik` namespace. Run on the controller.
 set -euo pipefail
 SVC="${1:?service-account username required}"; PERMS="${2:-}"
