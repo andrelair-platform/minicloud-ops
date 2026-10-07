@@ -18,6 +18,12 @@
 #   stalwart-mail-ops.sh verify <email> [password]   # IMAP login check (default pw if omitted)
 #   stalwart-mail-ops.sh welcome <email>             # send a welcome mail -> auto-creates the mailbox
 #   stalwart-mail-ops.sh clear-cache                 # restart Stalwart (clears stale auth/dir cache)
+#   stalwart-mail-ops.sh share-it <nc-user-id>       # add the it@ shared mailbox to an IT member's Nextcloud Mail
+#
+# it@ SHARED MAILBOX note: Stalwart exposes NO shared/other-users IMAP namespace here, so ACL
+# delegation (SETACL) is set but NOT reachable from another user's session. The working model is a
+# login-capable shared account `it@` (creds in Vault secret/platform/stalwart-shared-it) added as a
+# SECOND account in each IT-roster member's Nextcloud Mail (reply-as it@ is native). `share-it` does that.
 #
 # WHY these three (learned 2026-10-07, gitops #1686 / memory project_mail_authentik_ldap_federation):
 #   * A brand-new LDAP user has NO Stalwart mailbox until their first delivery — `welcome` guarantees it.
@@ -140,6 +146,23 @@ PY
     echo "Restarting Stalwart to clear the auth/directory cache (~15s mail downtime)..."
     kubectl rollout restart statefulset/stalwart -n "$NS"
     kubectl rollout status statefulset/stalwart -n "$NS" --timeout=120s
+    ;;
+  share-it)
+    uid="${1:-}"; [ -n "$uid" ] || die "usage: share-it <nextcloud-user-id>   (e.g. a matricule like 100001)"
+    root=$(vault_root_token)
+    it_email=$(vault_get "$root" platform/stalwart-shared-it email)
+    it_pw=$(vault_get "$root" platform/stalwart-shared-it password)
+    [ -n "$it_email" ] && [ -n "$it_pw" ] || die "cannot read it@ shared creds from Vault"
+    ncpod=$(kubectl get pod -n nextcloud -l app.kubernetes.io/name=nextcloud -o name | head -1)
+    [ -n "$ncpod" ] || die "no nextcloud pod"
+    if kubectl exec -n nextcloud "$ncpod" -c nextcloud -- php occ mail:account:export "$uid" 2>/dev/null | grep -q "E-Mail: ${it_email}"; then
+      echo "SKIP: NC user $uid already has the ${it_email} shared account"; exit 0
+    fi
+    echo "Adding ${it_email} shared mailbox to NC user ${uid}..."
+    kubectl exec -n nextcloud "$ncpod" -c nextcloud -- php occ mail:account:create \
+      "$uid" "Equipe IT (it@)" "$it_email" \
+      "$HOST" 143 tls "$it_email" "$it_pw" \
+      "$HOST" 587 tls "$it_email" "$it_pw" password
     ;;
   *)
     grep -E '^#( |=|!)' "$0" | sed 's/^# \{0,1\}//'
