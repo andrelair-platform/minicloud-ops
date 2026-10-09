@@ -75,10 +75,14 @@ INGRESS_NGINX_DEPLOYMENT: str = "nginx-ingress-ingress-nginx-controller"
 # (too few replica homes = the stuck-rebuild situation from the 2026-09-26 incident).
 LONGHORN_MIN_SCHEDULABLE_NODES: int = 3
 
-# (namespace, pod_name) pairs – checked with pg_isready
+# (namespace, pod_or_cnpg_cluster) pairs – checked with pg_isready.
+# A literal pod name is used as-is (STS pods); if it isn't a pod, it's treated as a
+# CNPG *cluster* name and the check resolves a live instance by the cnpg.io/cluster
+# label (failover-safe — CNPG instance numbers change). Synapse's DB was migrated
+# STS->CNPG (2026-10; old "postgresql-synapse-0" no longer exists).
 POSTGRES_INSTANCES: list[tuple[str, str]] = [
     ("ai", "postgresql-ai-0"),
-    ("chat", "postgresql-synapse-0"),
+    ("chat", "synapse-postgres"),
 ]
 
 # Controller root-disk usage %: fail above this. 2026-08-18: controller disk filled ->

@@ -216,11 +216,26 @@ def check_argocd_apps() -> CheckResult:
 def check_postgres(namespace: str, pod: str) -> CheckResult:
     # -h 127.0.0.1 forces TCP; -U postgres required (PG 18 returns exit 3 without explicit user).
     # bash -c wrapper ensures the exit code is properly propagated through kubectl exec.
+    label = f"PostgreSQL ({namespace})"
+    # Resolve the target pod. If `pod` is not a literal pod name (e.g. it's a CNPG
+    # *cluster* name like "synapse-postgres"), find a pod of that cluster by label.
+    # CNPG primary pod names change on failover (synapse-postgres-1 -> -2), so we never
+    # hardcode the instance number — pg_isready on ANY instance proves the DB is up.
+    target = pod
+    rc_exist, _, _ = run("kubectl", "get", "pod", "-n", namespace, pod, "--no-headers")
+    if rc_exist != 0:
+        _, out, _ = run(
+            "kubectl", "get", "pod", "-n", namespace,
+            "-l", f"cnpg.io/cluster={pod}",
+            "-o", "jsonpath={.items[0].metadata.name}",
+        )
+        target = out.strip()
+        if not target:
+            return CheckResult(label, False, f"no pod or CNPG cluster '{pod}'")
     rc, _, stderr = run(
-        "kubectl", "exec", "-n", namespace, pod, "--",
+        "kubectl", "exec", "-n", namespace, target, "--",
         "bash", "-c", "pg_isready -h 127.0.0.1 -U postgres -q",
     )
-    label = f"PostgreSQL ({namespace})"
     if rc == 0:
         return CheckResult(label, True)
     return CheckResult(label, False, stderr.strip()[:60] or f"pg_isready exit={rc}")
