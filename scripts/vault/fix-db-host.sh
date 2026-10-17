@@ -15,8 +15,9 @@
 #   property   : the JSON key holding the connection string (e.g. DSN, database-url)
 #   old-host   : host substring to replace (e.g. ktayl-postgres.ktayl-prod.svc.cluster.local)
 #   new-host   : replacement (e.g. ktayl-cnpg-rw.ktayl-prod.svc.cluster.local)
-# ENV: VAULT_TOKEN (required, break-glass) · VAULT_ADDR (default https://vault.devandre.sbs) · CACERT
-#   (default ~/minicloud-ca.crt).
+# ENV: VAULT_TOKEN (required, break-glass) · VAULT_ADDR (default https://vault.10.0.0.200.nip.io — the
+#   INTERNAL ingress; the public vault.devandre.sbs is Cloudflare-fronted and BLOCKS the Vault API →
+#   empty responses, see feedback_vault_pki_migration) · CACERT (default ~/minicloud-ca.crt).
 #
 # EXAMPLE (on the controller, with the decrypted root token):
 #   VAULT_TOKEN=$(cat ~/.vault-root-token) \
@@ -25,7 +26,7 @@
 #
 # Idempotent: if the property already contains new-host, it is a no-op. The password is never printed.
 set -euo pipefail
-VAULT_ADDR="${VAULT_ADDR:-https://vault.devandre.sbs}"
+VAULT_ADDR="${VAULT_ADDR:-https://vault.10.0.0.200.nip.io}"  # internal ingress; devandre.sbs is CF-blocked
 CACERT="${CACERT:-$HOME/minicloud-ca.crt}"
 : "${VAULT_TOKEN:?set VAULT_TOKEN (break-glass root; the ops token has no write on secret/platform/*)}"
 VP="$1"; PROP="$2"; OLD="$3"; NEW="$4"
