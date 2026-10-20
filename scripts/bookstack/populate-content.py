@@ -980,6 +980,66 @@ usages UW/pricing sont *risque limité*, pas Annexe-III haut-risque — classifi
 - **Produire l'ORSA** : consolider profil de risque + SCR/fonds propres (FinAct) → rapport Conseil.
 - **Escalader** : constat critique ou dépassement d'appétit → CRO + Conseil (+ Audit interne).
 """,
+    # ───────────────────────── ACCESS POLICY (IT/Security/DORA) ─────────────────────────
+    (IT, "00-politique-dacces-iamiga"): """# Politique d'accès (IAM/IGA)
+
+> **Niveau : POLITIQUE** (sous-politique sécurité) · Titulaire : RSSI + propriétaire IAM · co-RH (JML)
+> · Revue annuelle. *Simulation.*
+
+## 1. Objet
+Gouverner **qui a accès à quoi** — au juste nécessaire, de façon tracée, approuvée et certifiée.
+
+## 2. Principes
+1. **Moindre privilège** + besoin d'en connaître.
+2. **Identité unique nominative** (SSO Authentik + **MFA**) — pas de compte partagé/générique.
+3. **JML** (joiner/mover/leaver) piloté par RH ; départ → **révocation immédiate**.
+4. **Double approbation** avant provisioning d'un entitlement (cœur `ktayl-iam`).
+5. **SoD** — pas de cumul de rôles incompatibles.
+6. **Revue / certification périodique** des accès (recertification).
+7. **PAM** — accès privilégiés encadrés (élévation just-in-time, journalisation).
+
+## 3. Exécution (policy-as-code)
+Appliquée par **`ktayl-iam` (#17)** : demande → **double approbation** → provisioning Authentik ; les
+groupes `Direction …` dérivent les rôles applicatifs (BookStack, etc.) à la connexion. Voir **RH —
+Procédure (intégration & départ)** + **RH — Runbook (gestion des comptes)** + la **Charte informatique**.
+
+## 4. Références
+Solvabilité II (gouvernance) · DORA (contrôle d'accès) · ISO 27001 A.5.15/A.8 · RGPD. Cross-links :
+`ktayl-iam` (#17), Charte informatique & numérique (RH).
+> **RGPD — registre des traitements (art. 30) :** tenu par le **DPO (Juridique)** — cross-link, non recopié ici.
+""",
+    # ───────────────────────── SIGNATURE DELEGATION MATRIX (Juridique) ─────────────────────────
+    (JUR, "00-matrice-de-delegation-de-signature"): """# Matrice de délégation de signature (engagements corporate)
+
+> **Niveau : DIRECTIVE / annexe** · Titulaire : Direction Juridique + Direction Générale · Approuvée par
+> le **Conseil** · Revue annuelle. *Simulation.*
+
+## 1. Objet
+Définir qui peut **engager / signer** au nom de ktayl-solution, par montant et type d'acte.
+**À ne pas confondre** avec la **matrice DoA de souscription** (autorité de *bind* d'un risque — voir
+Underwriting, Directive §3) : ici ce sont les **engagements corporate** (contrats, dépenses, actes réglementaires).
+
+## 2. Matrice (simulation — indicative)
+| Type d'acte | Montant / portée | Signataire habilité | Co-signature (four-eyes) |
+|---|---|---|---|
+| Contrat fournisseur / dépense | < 50 k€ | Responsable de domaine | — |
+|  | 50 k€ – 250 k€ | Directeur de domaine | + Finance |
+|  | 250 k€ – 1 M€ | Directeur Général | + Finance |
+|  | > 1 M€ | **Conseil d'administration** | délibération |
+| Embauche cadre / contrat de travail | — | DRH + DG | — |
+| Acte réglementaire (ACPR / EIOPA) | — | DG + Conformité | — |
+| Engagement d'assurance (police) | selon capacité | **voir DoA souscription** | four-eyes N2+ |
+| Placement de réassurance | selon programme | Direction Réassurance | + DG au-delà du seuil |
+
+## 3. Règles
+Séparation des tâches ; au-delà des seuils, **co-signature obligatoire** ; toute signature **hors matrice**
+est irrégulière → référer à la Direction Juridique. Les **délégations de pouvoir** sont écrites, datées et
+traçables (Code de commerce).
+
+## 4. Références
+Code de commerce (délégations de pouvoir) · statuts · Conseil d'administration (Corporate/Direction) ·
+Underwriting — Directive §3 (DoA souscription, distincte).
+""",
 }
 
 
