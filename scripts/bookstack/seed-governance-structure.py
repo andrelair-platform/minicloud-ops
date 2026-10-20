@@ -48,6 +48,10 @@ PILOTS = [
     "RH", "Juridique", "Underwriting", "IT / Security / DORA",
     "Pricing & Portfolio", "Risk Engineering", "Reinsurance & Captive",
     "Finance & Actuarial", "International Programmes",
+    # Wave 3 (2026-10-20): closes the gap the library sweep found — LCB-FT/sanctions, gestion des
+    # risques, ORSA and conformité were referenced everywhere but had no home. This book is the home;
+    # it CROSS-LINKS the ktayl-compliance obligations register (does not restate it).
+    "Compliance & Governance",
 ]
 
 # the 5-level documentation hierarchy (§6) — template pages seeded in each pilot's governance book

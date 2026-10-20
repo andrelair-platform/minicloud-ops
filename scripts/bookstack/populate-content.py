@@ -30,6 +30,7 @@ RISKENG = "risk-engineering-cadre-de-gouvernance"
 REINS = "reinsurance-captive-cadre-de-gouvernance"
 FINACT = "finance-actuarial-cadre-de-gouvernance"
 INTL = "international-programmes-cadre-de-gouvernance"
+COMP = "compliance-governance-cadre-de-gouvernance"
 
 CONTENT = {
     # ───────────────────────── UNDERWRITING ─────────────────────────
@@ -887,6 +888,97 @@ Vérifier admis/non-admis par pays, les obligations fiscales, le cash-before-cov
 - **Calculer l'allocation + l'IPT** : répartir la prime par territoire + appliquer la taxe locale.
 - **Contrôler la conformité** : admis/non-admis + sanctions + cash-before-cover avant émission.
 - **Réconcilier** : rapprocher les flux cross-border (primes cédées, taxes, sinistres) par période.
+""",
+    # ───────────────────────── COMPLIANCE & GOVERNANCE ─────────────────────────
+    (COMP, "01-politique-policy"): """# Politique de conformité & gouvernance
+
+> **Niveau : POLITIQUE** · Titulaire : Direction Juridique & Compliance (CCO) + Direction des Risques (CRO)
+> · Approuvée par le Conseil · Revue annuelle. *Simulation — ktayl-solution (IARD B2B).*
+
+## 1. Objet
+Définir le **système de gouvernance** (Solvabilité II Pilier 2) et la **conformité by-design** : s'assurer
+que ktayl-solution respecte ses obligations réglementaires, maîtrise ses risques et en apporte la preuve.
+
+## 2. Principes directeurs
+1. **Compliance by-design** — chaque capacité déclare, dès la conception, ses cadres déclenchés + les contrôles.
+2. **Les 4 fonctions-clés** indépendantes : **gestion des risques · conformité · actuariat · audit interne**.
+3. **ORSA** — évaluation interne des risques et de la solvabilité, au moins **annuelle** + ad-hoc sur changement majeur.
+4. **Boucle de contrôle interne** : `Risque → Contrôle → Propriétaire → Preuve → Test → Constat → Remédiation → Audit`.
+5. **LCB-FT & sanctions** — filtrage et vigilance proportionnés sur les tiers et les flux.
+6. **Un registre, une source de vérité** — les obligations ne sont PAS recopiées ici ; voir le **registre des obligations** (`ktayl-compliance`).
+
+## 3. Périmètre réglementaire (B2B / IARD — appliqué par activité)
+Solvabilité II · DORA · RGPD · **IDD/POG** · LCB-FT & sanctions · IFRS 17 · ACPR/EIOPA.
+*(Assureur ≠ banque : CRR/CRD/PSD2 ne s'appliquent pas.)*
+
+## 4. Références
+Solvabilité II art. 41-49 (gouvernance, 4 fonctions, ORSA) · DORA · RGPD · ACPR.
+**Source de vérité des obligations : `ktayl-compliance/docs/obligations-register.md`** (registre 17 cadres ×
+propriétaire/systèmes/contrôles). Programme de tests de résilience : `ktayl-compliance/docs/resilience-testing-programme.md`.
+""",
+    (COMP, "02-standard"): """# Standard de conformité & contrôle interne
+
+> **Niveau : STANDARD** — exigences obligatoires. *Simulation.*
+
+| # | Exigence | Contrôle |
+|---|---|---|
+| C1 | Chaque obligation a un **propriétaire + contrôle + preuve** dans le registre | Registre des obligations (`ktayl-compliance`) |
+| C2 | **ORSA** produit au moins annuellement + à tout changement majeur de profil de risque | Cadence ORSA |
+| C3 | **Filtrage sanctions / LCB-FT** sur tiers & flux, avant engagement | Écran de conformité |
+| C4 | **Séparation des tâches (SoD)** + double regard sur les actes sensibles | Contrôle d'autorité |
+| C5 | Tout **incident de conformité** est enregistré, qualifié, remédié | Journal des constats |
+| C6 | Les 4 fonctions-clés rendent un **rapport annuel** au Conseil | Rapports de fonction |
+| C7 | **Classification des données** (P0–P3) respectée dans les traitements | Contrôle data |
+
+## Seuils de référence (simulation)
+- Alerte sanctions → **blocage** jusqu'à levée par la Conformité.
+- Dépassement d'appétit au risque → escalade **CRO → Conseil** (via l'ORSA).
+- Constat critique non remédié dans le délai → remontée **Audit interne + Conseil**.
+""",
+    (COMP, "03-directive-guideline"): """# Directive de conformité
+
+> **Niveau : DIRECTIVE** — la référence métier. *Simulation.*
+
+## 1. Boucle de contrôle interne
+Pour chaque risque : définir le **contrôle**, nommer un **propriétaire**, collecter la **preuve**, **tester**
+périodiquement, ouvrir un **constat** si défaillance, suivre la **remédiation**, exposer à l'**audit**.
+Le registre des obligations (`ktayl-compliance`) est la carte maîtresse.
+
+## 2. LCB-FT & sanctions
+Vigilance adaptée au risque (KYC tiers), **filtrage sanctions** (UE/OFAC) des parties et territoires,
+déclaration des soupçons selon le dispositif. Déclenché à la souscription (voir UW — Standard S6) et aux programmes internationaux.
+
+## 3. Risques, ORSA & liens métier
+La **gestion des risques** alimente l'appétit (souscription) et le **coût du capital** (tarification —
+Pricing §1 & FinAct). L'**ORSA** relie profil de risque, solvabilité (SCR) et stratégie. La résilience
+opérationnelle (DORA) et le **registre des prestataires / stratégie de sortie** relèvent d'IT/Security-DORA
+et sont la thèse du produit **Retrieva** (ICT tiers) — cross-link, non recopié ici.
+
+## 4. EU AI Act (usage par cas)
+Tout cas d'usage IA est **classifié par tier de risque** (gate IA) ; les contrôles sont proportionnés et
+montent dès qu'une IA influence une décision à conséquence pour une personne. B2B/IARD : la plupart des
+usages UW/pricing sont *risque limité*, pas Annexe-III haut-risque — classifier au cas par cas.
+""",
+    (COMP, "04-procedure"): """# Procédure — cycle de conformité
+
+> **Niveau : PROCÉDURE** — pas-à-pas. *Simulation.*
+
+1. **Veille réglementaire** : détecter un changement (cadre, seuil) → impact sur le registre des obligations.
+2. **Mettre à jour le registre** : obligation → propriétaire → contrôle → preuve attendue.
+3. **Tester les contrôles** : exécuter le plan de test ; consigner le résultat (passé / constat).
+4. **Remédiation** : pour tout constat, plan + propriétaire + échéance ; suivre jusqu'à clôture.
+5. **ORSA** : évaluer le profil de risque vs la solvabilité (SCR) ; rapport au Conseil (annuel/ad-hoc).
+6. **Reporting** : rapports des 4 fonctions-clés ; remontée des constats critiques au Conseil + audit.
+""",
+    (COMP, "05-runbook"): """# Runbook — conformité
+
+> **Niveau : RUNBOOK** — gestes opérationnels. *Simulation.*
+
+- **Enregistrer une preuve de contrôle** : rattacher l'évidence au contrôle dans le registre (`ktayl-compliance`).
+- **Traiter une alerte sanctions/LCB-FT** : bloquer → instruire → lever ou déclarer ; tracer la décision.
+- **Ouvrir une remédiation** : constat → plan + propriétaire + échéance ; suivre jusqu'à clôture.
+- **Produire l'ORSA** : consolider profil de risque + SCR/fonds propres (FinAct) → rapport Conseil.
+- **Escalader** : constat critique ou dépassement d'appétit → CRO + Conseil (+ Audit interne).
 """,
 }
 
