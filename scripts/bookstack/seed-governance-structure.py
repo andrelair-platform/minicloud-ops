@@ -93,6 +93,11 @@ EXTRA_PAGES = {
          "cotation. L'intranet reste la **source de vérité**. Architecture : ADR-009 (modèle de perte → "
          "tarif approuvé → moteur déterministe ; un modèle est une boîte noire à l'entraînement, jamais au pricing)."),
     ],
+    "RH": [
+        ("00 Charte informatique & numérique",
+         "Charte d'usage du système d'information — **annexe au règlement intérieur**, signée à l'embauche. "
+         "Titulaire RH, co-rédigée avec la Sécurité/IT (RSSI). *Gabarit — contenu rempli par la population.*"),
+    ],
 }
 
 
