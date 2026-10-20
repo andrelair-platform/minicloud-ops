@@ -31,6 +31,12 @@ REINS = "reinsurance-captive-cadre-de-gouvernance"
 FINACT = "finance-actuarial-cadre-de-gouvernance"
 INTL = "international-programmes-cadre-de-gouvernance"
 COMP = "compliance-governance-cadre-de-gouvernance"
+# Wave 4 — the 5 domain books that complete the 12-domain enterprise framework (HDI-style).
+CLAIMS = "claims-cadre-de-gouvernance"
+CORP = "corporate-direction-cadre-de-gouvernance"
+DATA = "data-governance-privacy-ai-cadre-de-gouvernance"
+PROC = "procurement-third-parties-outsourcing-cadre-de-gouvernance"
+SUST = "sustainability-communications-business-continuity-cadre-de-gouvernance"
 
 CONTENT = {
     # ───────────────────────── UNDERWRITING ─────────────────────────
@@ -1039,6 +1045,357 @@ traçables (Code de commerce).
 ## 4. Références
 Code de commerce (délégations de pouvoir) · statuts · Conseil d'administration (Corporate/Direction) ·
 Underwriting — Directive §3 (DoA souscription, distincte).
+""",
+    # ───────────────────────── CLAIMS & FRAUD (05) ─────────────────────────
+    (CLAIMS, "01-politique-policy"): """# Politique de gestion des sinistres
+
+> **Niveau : POLITIQUE** · Titulaire : Direction Sinistres (Head of Claims) · Revue annuelle. *Simulation.*
+
+## 1. Objet
+Régler les sinistres de façon **juste, rapide et conforme**, protéger l'adéquation des provisions et la
+relation client, tout en maîtrisant la fraude.
+
+## 2. Principes directeurs
+1. **Vérification de garantie** avant tout règlement (couverture, exclusions, événement).
+2. **Provisionnement** prudent, ouvert tôt, mis à jour à chaque élément nouveau.
+3. **Séparation des tâches** — l'évaluateur n'a pas une autorité de paiement illimitée.
+4. **Fraude (SIU)** — indicateurs + escalade ; filtrage sanctions des bénéficiaires.
+5. **Autorité de règlement** par paliers (matrice).
+6. **Traçabilité** — dossier documenté + journal d'audit.
+
+## 3. Références
+Solvabilité II (provisions techniques) · ACPR · RGPD (données sinistre) · LCB-FT & sanctions.
+Exécution : **`ktayl-claims` (#11)**. Déclinaison : Standard · Directive · Procédure · Runbook.
+""",
+    (CLAIMS, "02-standard"): """# Standard de gestion des sinistres
+
+> **Niveau : STANDARD** — exigences obligatoires. *Simulation.*
+
+| # | Exigence | Contrôle |
+|---|---|---|
+| CL1 | **Vérification de garantie** avant règlement | Contrôle de couverture |
+| CL2 | **Provision** ouverte + mise à jour à chaque fait nouveau | Contrôle de réserve |
+| CL3 | **Autorité de règlement** respectée (matrice) | Contrôle d'autorité |
+| CL4 | Indicateurs de **fraude → SIU** | Écran fraude |
+| CL5 | **Grand sinistre** → procédure dédiée + **notification réassurance** | Seuil grand sinistre |
+| CL6 | **SoD** : évaluation ≠ autorité de paiement | Contrôle SoD |
+| CL7 | **Dossier documenté** avant clôture | Contrôle de clôture |
+
+## Seuils de référence (simulation)
+- **Grand sinistre > 1 M€** → comité grands sinistres + notification réassurance.
+- Règlement au-dessus du palier d'autorité → **référral** (four-eyes).
+""",
+    (CLAIMS, "03-directive-guideline"): """# Directive de gestion des sinistres
+
+> **Niveau : DIRECTIVE** — la référence métier. *Simulation.*
+
+## 1. Cycle de vie (FNOL → clôture)
+FNOL → vérification de garantie → expertise (loss adjuster) → provisionnement → décision de règlement
+(autorité) → recours / subrogation → clôture documentée.
+
+## 2. Matrice d'autorité de règlement (simulation)
+| Palier | Montant | Autorité |
+|---|---|---|
+| N1 — gestionnaire | ≤ 50 k€ | individuelle |
+| N2 — senior | ≤ 250 k€ | + four-eyes |
+| N3 — responsable | ≤ 1 M€ | + four-eyes |
+| N4 — comité grands sinistres | > 1 M€ | comité + notif réassurance |
+
+## 3. Fraude (SIU), litige, subrogation
+Indicateurs de fraude → **SIU** ; litige → avocat (Juridique) ; **subrogation** → recouvrement auprès du
+tiers responsable. Réserves cohérentes avec l'actuariat (provisionnement).
+""",
+    (CLAIMS, "04-procedure"): """# Procédure — traitement d'un sinistre
+
+> **Niveau : PROCÉDURE** — pas-à-pas. *Simulation.*
+
+1. **FNOL** : enregistrement + accusé de réception.
+2. **Vérification de garantie** : contrat, exclusions, réalité de l'événement.
+3. **Expertise** si nécessaire : nomination + pilotage de l'expert.
+4. **Provisionnement** : ouverture + mises à jour.
+5. **Décision de règlement** selon la matrice (four-eyes au-delà des seuils).
+6. **Grand sinistre** (> 1 M€) : comité + **notification réassurance**.
+7. **Recours / subrogation** + **clôture documentée**.
+""",
+    (CLAIMS, "05-runbook"): """# Runbook — sinistres
+
+> **Niveau : RUNBOOK** — gestes opérationnels (via `ktayl-claims`). *Simulation.*
+
+- **Enregistrer un sinistre (FNOL)** + accusé.
+- **Vérifier la garantie** + **ouvrir la provision**.
+- **Nommer un expert** + suivre l'expertise.
+- **Régler** dans l'autorité (four-eyes au-delà du seuil).
+- **Escalader un grand sinistre** (> 1 M€) → comité + réassurance.
+- **Clôturer** : preuve + comptabilisation + subrogation.
+""",
+    # ───────────────────────── CORPORATE GOVERNANCE & STRATEGY (01) ─────────────────────────
+    (CORP, "01-politique-policy"): """# Politique de gouvernance d'entreprise
+
+> **Niveau : POLITIQUE** · Titulaire : Conseil d'administration + Direction Générale · Revue annuelle. *Simulation.*
+
+## 1. Objet
+Définir le **système de gouvernance** : organes, responsabilités, délégations et supervision
+(Solvabilité II Pilier 2) — le sommet dont dérivent toutes les politiques métier.
+
+## 2. Principes directeurs
+1. **Organes clairs** — Conseil (supervise) · Direction (dirige) · **4 fonctions-clés** indépendantes.
+2. **Three Lines of Defence** (voir Directive).
+3. **Délégation de pouvoirs** écrite + traçable (voir Juridique — matrice de signature).
+4. **Appétit au risque** approuvé par le Conseil (via l'ORSA).
+5. **Redevabilité** + **revue au moins annuelle** des politiques écrites (Solva II art. 41).
+
+## 3. Références
+Solvabilité II art. 41-49 · statuts · Code de commerce. Registre des politiques : voir Compliance & Governance.
+""",
+    (CORP, "02-standard"): """# Standard de gouvernance d'entreprise
+
+> **Niveau : STANDARD** — exigences obligatoires. *Simulation.*
+
+| # | Exigence | Contrôle |
+|---|---|---|
+| G1 | Politiques écrites revues **≥ annuellement** (Solva II art. 41) | Registre + cadence |
+| G2 | **4 fonctions-clés** nommées + indépendantes (risques, conformité, actuariat, audit) | Organigramme |
+| G3 | **Délégations de pouvoir** documentées | Matrice de signature (Juridique) |
+| G4 | **Appétit au risque** approuvé par le Conseil | ORSA |
+| G5 | **Three Lines of Defence** opérant | Cartographie des contrôles |
+| G6 | Conflits d'intérêts au niveau dirigeant gérés | Registre des conflits |
+""",
+    (CORP, "03-directive-guideline"): """# Directive — modèle de gouvernance (Three Lines of Defence)
+
+> **Niveau : DIRECTIVE** — la référence métier. *Simulation.*
+
+## 1. Les trois lignes de maîtrise
+- **1re ligne — opérations** (Souscription, Sinistres, Finance, IT, Distribution) : possèdent les risques, exécutent les contrôles, tiennent la preuve.
+- **2e ligne — surveillance** (Gestion des risques, Conformité, Actuariat) : cadres, surveillance, challenge.
+- **3e ligne — Audit interne** : assurance indépendante.
+Le **Conseil** et la **Direction** assurent la gouvernance au-dessus de ce dispositif.
+
+## 2. Délégation d'autorité
+L'autorité descend via la **matrice de délégation de signature** (Juridique, engagements corporate) et la
+**DoA de souscription** (Underwriting, bind) — SoD maintenue.
+
+## 3. Pilotage stratégique
+Appétit au risque → **ORSA** → stratégie ; revue annuelle des politiques (registre de gouvernance).
+""",
+    (CORP, "04-procedure"): """# Procédure — revue annuelle de gouvernance
+
+> **Niveau : PROCÉDURE** — pas-à-pas. *Simulation.*
+
+1. **Inventaire** des politiques (registre de gouvernance).
+2. **Revue** par chaque titulaire (≥ annuelle — Solva II art. 41).
+3. **Mise à jour + ré-approbation** (Conseil / Direction selon le palier).
+4. **Communication** des changements (les managers adaptent les instructions de travail).
+5. **Preuve d'approbation** consignée (version + date d'effet).
+""",
+    (CORP, "05-runbook"): """# Runbook — gouvernance d'entreprise
+
+> **Niveau : RUNBOOK** — gestes opérationnels. *Simulation.*
+
+- **Mettre à jour une politique** : titulaire révise → approbation → publication (version + date).
+- **Mettre à jour une délégation** : via la matrice de signature (Juridique).
+- **Convoquer le comité** adapté au palier d'autorité.
+- **Consigner** l'approbation + **communiquer** le changement.
+""",
+    # ───────────────────────── DATA GOVERNANCE, PRIVACY & AI (10) ─────────────────────────
+    (DATA, "01-politique-policy"): """# Politique de gouvernance des données, vie privée & IA
+
+> **Niveau : POLITIQUE** · Titulaire : DPO + Chief Data Officer + RSSI · Revue annuelle. *Simulation.*
+
+## 1. Objet
+Garantir que les données sont **classifiées, protégées, de qualité**, et que l'**IA est gouvernée**
+(classification de risque, validation, supervision humaine).
+
+## 2. Principes directeurs
+1. **Classification P0–P3** (publique → restreinte) de toute donnée.
+2. **Minimisation + finalité + durée de conservation** (RGPD).
+3. **Qualité des données** — surtout provisions et modèles.
+4. **IA gouvernée** : classification par **tier de risque (AI-Act)**, validation des modèles, pas de décision automatisée non encadrée.
+5. **Décision automatisée** à impact personne : droits **RGPD art. 22** + supervision humaine + contestabilité.
+
+## 3. Références
+RGPD · **CNIL** (assurance : minimisation, profilage, décision automatisée) · **EU AI Act** · DORA (sécurité des données).
+Cross-link : plateforme **ai-governance** / gate AI-Act · Pricing (ADR-009, gouvernance des modèles).
+""",
+    (DATA, "02-standard"): """# Standard — données, vie privée & IA
+
+> **Niveau : STANDARD** — exigences obligatoires. *Simulation.*
+
+| # | Exigence | Contrôle |
+|---|---|---|
+| D1 | Toute donnée **classifiée P0–P3** | Registre de classification |
+| D2 | Données RESTREINT : **web-only, pas de copie locale** (BYOD) | Contrôle DLP |
+| D3 | **Durées de conservation** définies + purge | Politique de rétention |
+| D4 | Tout **cas d'usage IA classifié** (tier de risque) + system card | Gate AI-Act |
+| D5 | Modèle en production : **validé + versionné** (registered ≠ approved) | Registre MLflow + sign-off |
+| D6 | Décision automatisée à impact : **supervision humaine + contestabilité** | Contrôle art. 22 |
+""",
+    (DATA, "03-directive-guideline"): """# Directive — données, vie privée & IA
+
+> **Niveau : DIRECTIVE** — la référence métier. *Simulation.*
+
+## 1. Classification & manipulation (P0–P3)
+Classer chaque donnée/jeu ; appliquer les règles de partage, de conservation et de localisation
+(RESTREINT = web-only, serveur, pas de local — cohérent BYOD / *workplace-architecture*).
+
+## 2. RGPD
+**Registre des traitements** (tenu par le DPO), bases légales, droits des personnes, **DPIA** pour les
+traitements à risque élevé. Suivi des sous-traitants (art. 28, cf. Procurement).
+
+## 3. IA
+Classer chaque usage par **tier AI-Act** (la plupart des usages UW/pricing B2B = *risque limité*) ;
+**valider + monitorer** les modèles ; **explicabilité** (cf. Pricing ADR-009 : SHAP = validation, pas le
+prix) ; traçabilité via la plateforme (LiteLLM / Langfuse).
+""",
+    (DATA, "04-procedure"): """# Procédure — mise en production d'un cas d'usage IA
+
+> **Niveau : PROCÉDURE** — pas-à-pas. *Simulation.*
+
+1. **Classifier** le cas d'usage (tier AI-Act) + rédiger la *system card*.
+2. **Évaluer l'impact** (DPIA si données personnelles à risque).
+3. **Valider le modèle** (validation indépendante) + **sign-off**.
+4. **Publier** (versionné, MLflow) + activer le **monitoring** (dérive, A/E).
+5. **Supervision humaine + contestabilité** si décision à impact pour une personne.
+""",
+    (DATA, "05-runbook"): """# Runbook — données & IA
+
+> **Niveau : RUNBOOK** — gestes opérationnels. *Simulation.*
+
+- **Classifier** une donnée / un jeu → P0–P3.
+- **Enregistrer un traitement RGPD** (DPO) + base légale.
+- **Classifier un cas d'usage IA** (gate) + system card.
+- **Publier un modèle** (validé / versionné) + activer le monitoring.
+- **Traiter une demande de droits RGPD** (accès/rectification/opposition) via le DPO.
+""",
+    # ───────────────────────── PROCUREMENT, THIRD PARTIES & OUTSOURCING (11) ─────────────────────────
+    (PROC, "01-politique-policy"): """# Politique achats, tiers & externalisation
+
+> **Niveau : POLITIQUE** · Titulaire : Achats + Direction des Risques + RSSI · Revue annuelle. *Simulation.*
+
+## 1. Objet
+Maîtriser le risque lié aux **fournisseurs et à l'externalisation**, en particulier les **tiers ICT (DORA)**
+et les **fonctions critiques/importantes (Solvabilité II)**.
+
+## 2. Principes directeurs
+1. **Sélection + due diligence** proportionnées au risque.
+2. **Exigences contractuelles** : sécurité, droits d'audit, réversibilité, localisation des données.
+3. **Externalisation critique** → gouvernance renforcée (Solva II art. 49) + **notification du superviseur**.
+4. **Tiers ICT critiques** → **registre DORA** + droits d'audit + **stratégie de sortie**.
+5. **Surveillance continue** + plan de sortie **testable**.
+
+## 3. Références
+Solva II art. 49 (externalisation) · **DORA art. 28-30** (tiers ICT) · RGPD art. 28 (sous-traitants).
+Cross-link : **Retrieva** (produit de conformité tiers-ICT DORA) · `ktayl-compliance` (registre).
+""",
+    (PROC, "02-standard"): """# Standard — achats, tiers & externalisation
+
+> **Niveau : STANDARD** — exigences obligatoires. *Simulation.*
+
+| # | Exigence | Contrôle |
+|---|---|---|
+| P1 | **Due diligence** avant tout engagement tiers | Dossier fournisseur |
+| P2 | **Clauses obligatoires** (sécurité, audit, sortie, données) | Revue contractuelle (Juridique) |
+| P3 | Fonction critique externalisée → gouvernance + **notification ACPR** | Contrôle externalisation |
+| P4 | **Registre des prestataires ICT (DORA)** tenu | Registre (ktayl-compliance / Retrieva) |
+| P5 | **Stratégie de sortie** documentée + testée (tiers critiques) | Plan de sortie |
+| P6 | **Filtrage sanctions** du tiers | Écran de conformité |
+""",
+    (PROC, "03-directive-guideline"): """# Directive — tiers & externalisation
+
+> **Niveau : DIRECTIVE** — la référence métier. *Simulation.*
+
+## 1. Cycle fournisseur
+Qualification → **due diligence** (sécurité, finance, sanctions) → contrat → suivi → **sortie**.
+
+## 2. Tiers ICT (DORA)
+Inventaire + **criticité** ; droits d'audit ; sous-traitance en chaîne ; **stratégie de sortie**.
+**Retrieva** est l'outil qui *prouve* la conformité tiers-ICT (cross-link, non recopié ici).
+
+## 3. Externalisation (Solvabilité II)
+Fonctions **critiques ou importantes** : analyse, gouvernance, **notification**, surveillance continue.
+""",
+    (PROC, "04-procedure"): """# Procédure — onboarder un fournisseur critique
+
+> **Niveau : PROCÉDURE** — pas-à-pas. *Simulation.*
+
+1. **Qualifier** le besoin + la **criticité** (ICT ? fonction critique ?).
+2. **Due diligence** (sécurité, finance, **sanctions**).
+3. **Contrat** avec les clauses obligatoires (Juridique).
+4. Si critique/ICT → **registre** + **notification** + **stratégie de sortie**.
+5. **Surveillance** périodique + revue.
+""",
+    (PROC, "05-runbook"): """# Runbook — achats & tiers
+
+> **Niveau : RUNBOOK** — gestes opérationnels. *Simulation.*
+
+- **Enregistrer un fournisseur** + sa criticité.
+- **Lancer une due diligence** (sécurité / sanctions).
+- **Inscrire un tiers ICT critique** au registre DORA (+ Retrieva).
+- **Déclencher / tester** une stratégie de sortie.
+""",
+    # ───────────────────────── SUSTAINABILITY, COMMS & BC (12) ─────────────────────────
+    (SUST, "01-politique-policy"): """# Politique durabilité, communication & continuité
+
+> **Niveau : POLITIQUE** · Titulaire : Direction Générale (ESG) + Communication + Continuité (PCA) · Revue annuelle. *Simulation.*
+
+## 1. Objet
+Intégrer l'**ESG / risque climat**, maîtriser la **communication** (dont de crise) et garantir la
+**continuité opérationnelle**.
+
+## 2. Principes directeurs
+1. **Risque climat** intégré à l'ORSA + à la souscription (Solvabilité II).
+2. **Transparence ESG** (CSRD / SFDR selon applicabilité).
+3. **Communication** exacte et cohérente ; **porte-parole unique** en crise.
+4. **Continuité** : BIA + **PCA** + **tests réguliers** (résilience DORA).
+5. **Gestion de crise** : cellule + plan d'escalade.
+
+## 3. Références
+Solvabilité II (risque climat) · CSRD / SFDR (selon applicabilité) · **DORA** (résilience opérationnelle) · ACPR.
+""",
+    (SUST, "02-standard"): """# Standard — durabilité, communication & continuité
+
+> **Niveau : STANDARD** — exigences obligatoires. *Simulation.*
+
+| # | Exigence | Contrôle |
+|---|---|---|
+| S1 | **Risque climat** évalué (ORSA, souscription) | Analyse climat |
+| S2 | Reporting **ESG** selon applicabilité | Process CSRD/SFDR |
+| S3 | Communication externe **validée** (exactitude) | Revue comms |
+| S4 | **BIA + PCA** documentés pour les fonctions critiques | Plan de continuité |
+| S5 | **Tests de continuité / résilience** réguliers (DORA) | Calendrier de tests |
+| S6 | **Cellule de crise** + plan d'escalade | Dispositif de crise |
+""",
+    (SUST, "03-directive-guideline"): """# Directive — durabilité, communication & continuité
+
+> **Niveau : DIRECTIVE** — la référence métier. *Simulation.*
+
+## 1. ESG & climat
+Intégration au risque (souscription CAT, investissements, ORSA) ; reporting selon applicabilité (CSRD/SFDR).
+
+## 2. Communication
+Principes d'**exactitude** et de **cohérence** ; **communication de crise** (porte-parole unique, messages validés).
+
+## 3. Continuité (PCA) & résilience
+**BIA**, **RTO/RPO**, PCA, tests réguliers — aligné DORA (voir IT/Security/DORA + le programme de
+Game Days / `reliability-and-gamedays`).
+""",
+    (SUST, "04-procedure"): """# Procédure — gestion de crise / activation du PCA
+
+> **Niveau : PROCÉDURE** — pas-à-pas. *Simulation.*
+
+1. **Détecter + qualifier** l'événement (gravité, impact, fonctions touchées).
+2. **Activer** la cellule de crise + le **PCA** concerné.
+3. **Communiquer** (interne + externe + superviseur si requis).
+4. **Rétablir** les fonctions critiques (RTO/RPO).
+5. **Retour d'expérience** (postmortem) + mise à jour du plan.
+""",
+    (SUST, "05-runbook"): """# Runbook — continuité & crise
+
+> **Niveau : RUNBOOK** — gestes opérationnels. *Simulation.*
+
+- **Déclencher** la cellule de crise + **activer le PCA**.
+- **Diffuser** un message de crise validé (porte-parole unique).
+- **Suivre** le rétablissement (RTO/RPO).
+- **Clôturer** + **postmortem** + mettre à jour le plan.
 """,
 }
 

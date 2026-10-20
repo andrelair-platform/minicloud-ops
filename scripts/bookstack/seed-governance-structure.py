@@ -37,6 +37,10 @@ SHELVES = [
     ("IT / Security / DORA", "IT / Sécurité / DORA — InfoSec, BCP, incident, change"),
     ("International Programmes", "Programmes internationaux — polices master/locales, flux cross-border"),
     ("Corporate / Direction", "Corporate / Direction — gouvernance d'entreprise, délégations"),
+    # Wave 4 (2026-10-20): the 3 enterprise-function domains the 12-domain framework adds beyond the LOB shelves.
+    ("Data Governance, Privacy & AI", "Données, vie privée & IA — classification, RGPD, gouvernance IA"),
+    ("Procurement, Third Parties & Outsourcing", "Achats, tiers & externalisation — due diligence, DORA ICT, sortie"),
+    ("Sustainability, Communications & Business Continuity", "Durabilité, communication & continuité — ESG, crise, PCA"),
 ]
 
 # Shelves that get a governance book. Wave 1: the 3 Phase-1 pilots + IT/Security/DORA. Wave 2
@@ -52,6 +56,12 @@ PILOTS = [
     # risques, ORSA and conformité were referenced everywhere but had no home. This book is the home;
     # it CROSS-LINKS the ktayl-compliance obligations register (does not restate it).
     "Compliance & Governance",
+    # Wave 4 (2026-10-20): complete the 12-domain enterprise governance framework (HDI-style) — the last
+    # 5 domain books. Cross-link real homes (Claims→ktayl-claims #11, Procurement/ICT-third-party→Retrieva
+    # + ktayl-compliance, Data/AI→platform ai-governance + Pricing ADR-009), don't duplicate.
+    "Claims", "Corporate / Direction", "Data Governance, Privacy & AI",
+    "Procurement, Third Parties & Outsourcing",
+    "Sustainability, Communications & Business Continuity",
 ]
 
 # the 5-level documentation hierarchy (§6) — template pages seeded in each pilot's governance book
