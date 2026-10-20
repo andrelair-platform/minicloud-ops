@@ -31,7 +31,7 @@ REINS = "reinsurance-captive-cadre-de-gouvernance"
 FINACT = "finance-actuarial-cadre-de-gouvernance"
 INTL = "international-programmes-cadre-de-gouvernance"
 COMP = "compliance-governance-cadre-de-gouvernance"
-# Wave 4 — the 5 domain books that complete the 12-domain enterprise framework (HDI-style).
+# Wave 4 — the 5 domain books that complete the 12-domain enterprise framework.
 CLAIMS = "claims-cadre-de-gouvernance"
 CORP = "corporate-direction-cadre-de-gouvernance"
 DATA = "data-governance-privacy-ai-cadre-de-gouvernance"

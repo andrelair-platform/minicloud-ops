@@ -56,7 +56,7 @@ PILOTS = [
     # risques, ORSA and conformité were referenced everywhere but had no home. This book is the home;
     # it CROSS-LINKS the ktayl-compliance obligations register (does not restate it).
     "Compliance & Governance",
-    # Wave 4 (2026-10-20): complete the 12-domain enterprise governance framework (HDI-style) — the last
+    # Wave 4 (2026-10-20): complete the 12-domain enterprise governance framework — the last
     # 5 domain books. Cross-link real homes (Claims→ktayl-claims #11, Procurement/ICT-third-party→Retrieva
     # + ktayl-compliance, Data/AI→platform ai-governance + Pricing ADR-009), don't duplicate.
     "Claims", "Corporate / Direction", "Data Governance, Privacy & AI",
