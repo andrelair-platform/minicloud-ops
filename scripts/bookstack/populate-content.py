@@ -23,6 +23,13 @@ UW = "underwriting-cadre-de-gouvernance"
 IT = "it-security-dora-cadre-de-gouvernance"
 RH = "rh-cadre-de-gouvernance"
 JUR = "juridique-cadre-de-gouvernance"
+# Wave 2 — the business-domain governance books (slugs follow BookStack's slugify of
+# "<shelf> — Cadre de gouvernance"; verify once after seeding — main() warns on any mismatch).
+PRICING = "pricing-portfolio-cadre-de-gouvernance"
+RISKENG = "risk-engineering-cadre-de-gouvernance"
+REINS = "reinsurance-captive-cadre-de-gouvernance"
+FINACT = "finance-actuarial-cadre-de-gouvernance"
+INTL = "international-programmes-cadre-de-gouvernance"
 
 CONTENT = {
     # ───────────────────────── UNDERWRITING ─────────────────────────
@@ -407,6 +414,401 @@ Standard, Directive, Procédure ci-contre.
 - **Obtenir un modèle** : récupérer le modèle validé correspondant au besoin.
 - **Escalader** : litige / mise en demeure → notifier immédiatement la Direction Juridique & Compliance.
 - **Archiver** : déposer le contrat signé + l'avis dans l'espace Juridique (référence unique).
+""",
+    # ───────────────────────── PRICING & PORTFOLIO ─────────────────────────
+    (PRICING, "01-politique-policy"): """# Politique de tarification & pilotage de portefeuille
+
+> **Niveau : POLITIQUE** · Titulaire : Chief Actuary + CUO · Approuvée par le Comité technique · Revue annuelle
+> *Simulation — ktayl-solution (IARD B2B). Cadre Solvabilité II Pilier 2 + IDD/POG (value-for-money).*
+
+## 1. Objet
+Garantir que chaque prime émise est **techniquement adéquate** (couvre la sinistralité attendue + les
+chargements) et que le portefeuille est piloté pour préserver la rentabilité et la solvabilité.
+
+## 2. Principes directeurs
+1. **Plancher technique** — aucune prime commerciale sous la **prime technique** sans dérogation tracée.
+2. **Tarif approuvé & versionné** — aucun barème en production sans validation indépendante + sign-off actuariel ; tout barème est **immuable et versionné**.
+3. **Un modèle est une boîte noire à l'entraînement, jamais au pricing** — le prix reste reconstructible indépendamment de tout modèle/IA.
+4. **Reproductibilité** — toute cotation est rejouable à l'identique (manifeste de cotation).
+5. **Pilotage** — adéquation tarifaire, dérive et ratio réel/attendu (A/E) suivis en continu.
+6. **POG/value-for-money** — la tarification respecte le marché cible produit (IDD).
+
+## 3. Références
+Solvabilité II (provisions, coût du capital) · IDD art. 25 (POG) · ACPR · ADR-009 (évolution tarifaire :
+modèle de perte → tarif approuvé → moteur déterministe). Déclinaison : Standard · Directive · complément exécutable.
+""",
+    (PRICING, "02-standard"): """# Standard de tarification & gouvernance des modèles
+
+> **Niveau : STANDARD** — exigences obligatoires. *Simulation.*
+
+## Exigences minimales
+| # | Exigence | Contrôle |
+|---|---|---|
+| P1 | Prime commerciale **≥ prime technique** (sinistralité + frais + coût du capital + marge) | Contrôle de plancher |
+| P2 | Tout barème (`rate_table`) est **versionné, immuable, daté** (date d'effet) | ADR-004 |
+| P3 | **Enregistré ≠ approuvé** — validation indépendante (out-of-time, calibration, stabilité, biais) **puis** sign-off actuariel avant publication | Registre MLflow + gate actuariel |
+| P4 | Arrondis, bandes d'autorité et règles commerciales **encodés dans le tarif approuvé** | Artefact tarifaire |
+| P5 | **Manifeste de cotation** persisté (versions modèle/tarif/règles + faits + preuves + décomposition) | Journal append-only |
+| P6 | Suivi **A/E** (réel vs attendu) par segment + dérive de facteurs | Tableau de bord de pilotage |
+
+## Seuils de référence (simulation)
+- Ratio de sinistralité cible (loss ratio) de pilotage : **≤ 60 %** technique.
+- Dérogation sous plancher technique : **référral CUO** obligatoire + justification écrite.
+- Révision du barème : au moins **annuelle**, ou sur alerte A/E.
+""",
+    (PRICING, "03-directive-guideline"): """# Directive de tarification
+
+> **Niveau : DIRECTIVE** — la référence métier. Un sous-ensemble est **exécuté** par `ktayl-underwriting`
+> (moteur de tarification) — voir *Complément exécutable*. *Simulation.*
+
+## 1. Construction de la prime (de la prime pure à la prime quittancée)
+```
+COÛT DU SINISTRE ATTENDU  (modèle de perte GLM fréquence × sévérité)
+= PRIME PURE
+  + chargement de frais (acquisition + gestion)
+  + marge de risque / coût du capital (Solvabilité II)
+  + provision CAT (modélisée séparément)
+= INDICATION TECHNIQUE
+  × ajustement commercial (borné, tracé, soumis à l'autorité)
+= PRIME COMMERCIALE
+  + taxes (TCA/IPT selon territoire) + frais
+= PRIME QUITTANCÉE
+```
+
+## 2. Bandes de chargement / remise (exemples, simulation)
+| Facteur | Effet | Gate |
+|---|---|---|
+| Occupation (tarif) | ×relativité GLM par classe | Barème |
+| TIV élevé (> 5 M€) | majoration | Barème |
+| Protection incendie (sprinkler) | remise | Rapport Risk Engineering |
+
+## 3. Dérogations & référral
+Prime < plancher technique → **référral CUO**. Ajustement commercial au-delà de la bande → autorité supérieure.
+La **réassurance n'est pas une remise par risque** : elle alimente la provision CAT + le coût du capital au niveau **portefeuille** (voir Réassurance & Captive).
+
+➡️ **Exécution :** relativités, plancher et manifeste appliqués par `ktayl-underwriting` — voir *Complément exécutable*.
+""",
+    (PRICING, "04-procedure"): """# Procédure — publier un nouveau barème (tarif)
+
+> **Niveau : PROCÉDURE** — pas-à-pas. *Simulation. Cf. ADR-009.*
+
+1. **Préparer les données** : exposition, sinistres, termes de police, mise à niveau inflation, qualité des données.
+2. **Entraîner le modèle** : GLM fréquence/sévérité ; diagnostics (lift, Gini, A/E par facteur).
+3. **Validation indépendante** : hors-échantillon, calibration, stabilité, **contrôle de biais/proxy**, performance par segment.
+4. **Sign-off actuariel** : revue + approbation du tarif retenu (gate nommé, consigné à la RACI).
+5. **Publication immuable** : coefficients **+ règles + arrondis + dates d'effet + autorité** = un artefact versionné (MLflow + table tarifaire).
+6. **Déploiement contrôlé** : promotion GitOps, tests de régression, rollback ; champion/challenger.
+7. **Suivi en production** : A/E par segment, dérive, taux de référral/dérogation.
+
+> Une dérogation de cotation suit la **Procédure de souscription** (référral CUO).
+""",
+    (PRICING, "05-runbook"): """# Runbook — opérations tarifaires
+
+> **Niveau : RUNBOOK** — gestes opérationnels. *Simulation.*
+
+- **Publier un barème** : promouvoir la nouvelle version du tarif approuvé (PR GitOps gated) → le moteur charge la version.
+- **Rollback** : repointer sur la version précédente (immuable) ; aucune cotation historique n'est altérée (manifeste).
+- **Champion/challenger** : router une part du trafic vers le barème candidat ; comparer l'A/E avant bascule.
+- **Alerte A/E / dérive** : si le ratio réel/attendu sort de la bande → geler les évolutions à risque, ouvrir une revue actuarielle.
+- **Rejouer une cotation** : récupérer le manifeste (versions modèle/tarif/règles + faits) → recalcul à l'identique.
+""",
+    (PRICING, "00-complement-executable-policy-as-code"): """# Complément exécutable (policy-as-code)
+
+La **Directive de tarification** est en partie **exécutée** par `ktayl-underwriting` — l'intranet reste la
+**source de vérité**, le moteur applique les règles critiques de façon déterministe et reproductible.
+
+## Règles appliquées en ligne
+| Règle (Directive) | Appliquée par |
+|---|---|
+| Relativités / barème approuvé (`rate_table`, versionné) | Moteur de tarification `rate()` |
+| Plancher technique | Contrôle tarifaire (référral CUO si sous plancher) |
+| Décomposition explicable (ligne à ligne) | `QuoteBreakdown` (trace legible) |
+| Reproductibilité | **Manifeste de cotation** (versions + faits + preuves) |
+
+**Architecture (ADR-009) :** modèle de perte (GLM, hors-ligne, MLflow — jamais appelé au pricing) →
+**tarif approuvé** (artefact gouverné, immuable) → **moteur déterministe** (le seam pur `rate()`).
+Un modèle est une boîte noire à l'entraînement, **jamais au pricing**. SHAP = validation du modèle,
+**pas** l'arithmétique de la prime.
+""",
+    # ───────────────────────── RISK ENGINEERING ─────────────────────────
+    (RISKENG, "01-politique-policy"): """# Politique d'ingénierie des risques
+
+> **Niveau : POLITIQUE** · Titulaire : Responsable Risk Engineering · Revue annuelle. *Simulation.*
+
+## 1. Objet
+Évaluer et améliorer la **qualité des risques** souscrits (prévention, protection) et fournir à la
+souscription et à la tarification une information de risque fiable et traçable.
+
+## 2. Principes directeurs
+1. **Évaluation sur site** — les risques significatifs font l'objet d'une visite + évaluation **COPE** (Construction, Occupation, Protection, Exposition).
+2. **Recommandations priorisées** — chaque constat donne lieu à une recommandation classée par criticité + délai.
+3. **Boucle avec la souscription** — la note de qualité de risque alimente l'appétit et la tarification (ex. remise protection).
+4. **Prévention CAT** — exposition catastrophe caractérisée (zone, cumul) et transmise à la réassurance.
+5. **Traçabilité** — visites, constats et suivi de remédiation documentés.
+
+## 3. Références
+Solvabilité II (gestion des risques) · normes de prévention incendie (ex. sprinkler) · Politique de souscription · Politique de réassurance.
+""",
+    (RISKENG, "02-standard"): """# Standard d'ingénierie des risques
+
+> **Niveau : STANDARD** — exigences obligatoires. *Simulation.*
+
+| # | Exigence | Contrôle |
+|---|---|---|
+| RE1 | Visite de site obligatoire au-dessus d'un seuil de **TIV / occupation à risque** | Déclencheur de visite |
+| RE2 | Évaluation **COPE** documentée + note de qualité de risque | Fiche d'évaluation |
+| RE3 | Recommandations classées **critique / majeure / mineure** avec délai | Registre de recommandations |
+| RE4 | **Ré-inspection** selon la criticité (critique ≤ 12 mois) | Cadence de ré-inspection |
+| RE5 | Protections minimales vérifiées (détection/extinction, compartimentage) | Check-list de protection |
+| RE6 | Exposition **CAT** (zone, cumul) renseignée pour la souscription/réassurance | Donnée de cumul |
+
+## Seuils de référence (simulation)
+- Visite obligatoire : TIV > **10 M€** ou occupation hors-standard.
+- Recommandation critique non levée → **référral souscription** (impact appétit/tarif).
+""",
+    (RISKENG, "03-directive-guideline"): """# Directive d'ingénierie des risques
+
+> **Niveau : DIRECTIVE** — la référence métier. *Simulation.*
+
+## 1. Évaluation COPE
+- **Construction** : matériaux, résistance au feu, compartimentage.
+- **Occupation** : activité, process, charge calorifique, stockage.
+- **Protection** : sprinklers, détection, moyens de secours, organisation.
+- **Exposition** : voisinage, zone CAT (inondation, tempête, sismique).
+
+## 2. Notation & impact tarifaire
+La note de qualité de risque et les protections confirmées **alimentent la tarification** : ex. une
+protection sprinkler vérifiée ouvre droit à la **remise de protection** du barème (voir Pricing — Directive).
+Une recommandation critique ouverte peut dégrader l'appétit ou imposer une surprime.
+
+## 3. Suivi des recommandations
+Chaque recommandation est suivie jusqu'à clôture ; les critiques non levées remontent à la souscription.
+""",
+    (RISKENG, "04-procedure"): """# Procédure — visite de risque
+
+> **Niveau : PROCÉDURE** — pas-à-pas. *Simulation.*
+
+1. **Déclenchement** : soumission au-dessus du seuil TIV/occupation → planifier une visite.
+2. **Visite de site** : évaluation COPE + relevé des protections + exposition CAT.
+3. **Notation** : attribuer la note de qualité de risque.
+4. **Recommandations** : émettre + classer (critique/majeure/mineure) + délai.
+5. **Transmission** : fiche + note + recommandations → souscription/tarification (et réassurance si CAT).
+6. **Suivi** : tracer la remédiation ; ré-inspecter selon la criticité.
+""",
+    (RISKENG, "05-runbook"): """# Runbook — ingénierie des risques
+
+> **Niveau : RUNBOOK** — gestes opérationnels. *Simulation.*
+
+- **Enregistrer une visite** : créer la fiche COPE + la note de qualité de risque.
+- **Émettre une recommandation** : criticité + délai + responsable côté assuré.
+- **Escalader** : recommandation critique non levée → notifier le souscripteur (impact appétit/tarif).
+- **Clôturer** : enregistrer la preuve de remédiation + planifier la ré-inspection.
+""",
+    # ───────────────────────── REINSURANCE & CAPTIVE ─────────────────────────
+    (REINS, "01-politique-policy"): """# Politique de réassurance & captive
+
+> **Niveau : POLITIQUE** · Titulaire : Direction Réassurance + CFO · Approuvée par le Conseil · Revue annuelle. *Simulation.*
+
+## 1. Objet
+Protéger le **capital** et lisser la **volatilité** des résultats en transférant une partie des risques,
+dans le respect de l'appétit et des exigences de solvabilité.
+
+## 2. Principes directeurs
+1. **Programme cohérent** — traités proportionnels / non-proportionnels dimensionnés sur l'exposition et l'appétit.
+2. **Rétention maîtrisée** — rétention nette par risque / par événement dans les limites fixées.
+3. **Sécurité des contreparties** — réassureurs au-dessus d'une notation minimale ; diversification.
+4. **CAT** — couverture catastrophe dimensionnée sur les cumuls (lien Risk Engineering).
+5. **Captive** — utilisée dans un cadre gouverné (collatéral, substance, conformité).
+6. **Effet tarifaire au niveau portefeuille** — la réassurance informe la **provision CAT** et le **coût du capital** du tarif, **non** une remise par risque (cf. Pricing / ADR-009).
+
+## 3. Références
+Solvabilité II (atténuation du risque / SCR) · ORSA · Politique de souscription · Politique financière.
+""",
+    (REINS, "02-standard"): """# Standard de réassurance
+
+> **Niveau : STANDARD** — exigences obligatoires. *Simulation.*
+
+| # | Exigence | Contrôle |
+|---|---|---|
+| R1 | Notation minimale réassureur : **A-** (sinon dérogation + collatéral) | Contrôle de sécurité |
+| R2 | Cession maximale par contrepartie (concentration) | Suivi des cumuls de cession |
+| R3 | Rétention nette : par risque **≤ 2 M€**, par événement selon le programme CAT | Contrôle de rétention |
+| R4 | Facultative obligatoire **au-delà de la rétention** / hors traité | Déclencheur de placement |
+| R5 | **Bordereaux** (primes cédées / sinistres) produits trimestriellement | Cadence bordereaux |
+| R6 | Captive : collatéral + reporting conformes | Contrôle captive |
+""",
+    (REINS, "03-directive-guideline"): """# Directive de réassurance
+
+> **Niveau : DIRECTIVE** — la référence métier. *Simulation.*
+
+## 1. Traité vs facultative
+- **Traité** (automatique) : couvre un portefeuille défini ; proportionnel (quote-part/excédent) ou non-proportionnel (XS).
+- **Facultative** : risque individuel au-delà de la rétention/du traité, ou hors-appétit du traité.
+
+## 2. Cessions & recouvrements
+La cession suit la structure du programme ; les **recouvrements** sont comptabilisés nets des primes cédées
+et du collatéral. Primes cédées, pertes retenues, recouvrements et provisions CAT sont traités de façon
+**cohérente** (pas de double-compte).
+
+## 3. Lien avec la tarification
+La réassurance agit au niveau **portefeuille/capital** : elle dimensionne la **provision CAT** et le
+**coût du capital** repris dans l'indication technique — **jamais** une remise soustraite d'une prime individuelle.
+""",
+    (REINS, "04-procedure"): """# Procédure — placement & recouvrement
+
+> **Niveau : PROCÉDURE** — pas-à-pas. *Simulation.*
+
+1. **Détection** : risque au-dessus de la rétention / hors traité → besoin de facultative.
+2. **Placement facultatif** : sélection de réassureurs (notation), cotation, confirmation de couverture.
+3. **Enregistrement de la cession** : parts, conditions, référence.
+4. **Bordereaux** : production trimestrielle (primes cédées / sinistres).
+5. **Recouvrement** : sur sinistre dépassant la rétention → déclarer + recouvrer auprès des réassureurs.
+6. **Renouvellement** : revue annuelle du programme (exposition, appétit, sécurité).
+""",
+    (REINS, "05-runbook"): """# Runbook — réassurance
+
+> **Niveau : RUNBOOK** — gestes opérationnels. *Simulation.*
+
+- **Enregistrer une cession** : parts + conditions + contrepartie (contrôle de notation).
+- **Déclencher un recouvrement** : sinistre > rétention → ouvrir le recouvrement + suivre l'encaissement.
+- **Produire un bordereau** : extraire primes cédées / sinistres de la période.
+- **Renouveler un traité** : préparer l'exposition + les cumuls ; négocier ; mettre à jour les rétentions/limites.
+""",
+    # ───────────────────────── FINANCE & ACTUARIAL ─────────────────────────
+    (FINACT, "01-politique-policy"): """# Politique finance & actuariat
+
+> **Niveau : POLITIQUE** · Titulaire : CFO + Chief Actuary · Approuvée par le Conseil · Revue annuelle. *Simulation.*
+
+## 1. Objet
+Assurer l'**adéquation des provisions techniques**, la solidité du capital et la fiabilité de l'information
+financière (Solvabilité II + IFRS 17), au service d'une tarification et d'un pilotage sains.
+
+## 2. Principes directeurs
+1. **Provisions adéquates** — meilleure estimation (best estimate) + **marge de risque**, revues périodiquement.
+2. **Capital** — couverture du **SCR** au-dessus du seuil d'appétit ; ORSA annuel.
+3. **IFRS 17** — mesure des contrats selon le modèle applicable (PAA / GMM).
+4. **Fonction actuarielle** — opinion indépendante sur provisions, tarification et réassurance.
+5. **Investissement** — prudence (personne prudente), adossement actif/passif.
+6. **Qualité des données** — données alimentant les provisions et les modèles contrôlées.
+
+## 3. Références
+Solvabilité II (art. 48 fonction actuarielle ; provisions techniques ; SCR/ORSA) · IFRS 17 · ACPR.
+""",
+    (FINACT, "02-standard"): """# Standard finance & actuariat
+
+> **Niveau : STANDARD** — exigences obligatoires. *Simulation.*
+
+| # | Exigence | Contrôle |
+|---|---|---|
+| F1 | Provisions = **best estimate + marge de risque**, méthodologie documentée | Revue actuarielle |
+| F2 | Revue des provisions au moins **trimestrielle** + à la clôture | Cadence de revue |
+| F3 | Couverture **SCR ≥ seuil d'appétit** (ex. 150 %) | Suivi du ratio de solvabilité |
+| F4 | **Opinion de la fonction actuarielle** sur provisions / tarif / réassurance | Rapport annuel |
+| F5 | Qualité des données (exhaustivité, exactitude, pertinence) attestée | Contrôle qualité données |
+| F6 | Mesure **IFRS 17** cohérente (modèle, frontières de contrat) | Clôture IFRS 17 |
+""",
+    (FINACT, "03-directive-guideline"): """# Directive finance & actuariat
+
+> **Niveau : DIRECTIVE** — la référence métier. *Simulation.*
+
+## 1. Provisionnement
+Estimer la charge ultime par méthodes actuarielles (ex. Chain-Ladder / Bornhuetter-Ferguson), dériver la
+**meilleure estimation** + la **marge de risque** (coût du capital).
+
+## 2. Lien avec la tarification
+Le **coût du capital** et la sinistralité attendue nourrissent l'**indication technique** du pricing
+(voir Pricing — Directive). La fonction actuarielle émet un avis sur l'adéquation du tarif.
+
+## 3. IFRS 17 & reporting
+Classer les contrats, choisir le modèle de mesure (PAA pour les contrats courts IARD), produire les états.
+Réconcilier vue **statutaire (Solvabilité II)** et **IFRS 17**.
+""",
+    (FINACT, "04-procedure"): """# Procédure — clôture & revue des provisions
+
+> **Niveau : PROCÉDURE** — pas-à-pas. *Simulation.*
+
+1. **Arrêté des données** : sinistres, primes, exposition de la période (qualité contrôlée).
+2. **Calcul des provisions** : best estimate + marge de risque par branche.
+3. **Revue actuarielle** : analyse des écarts (réel vs attendu), justification.
+4. **SCR / fonds propres** : produire le ratio de solvabilité.
+5. **IFRS 17** : mesure + états financiers ; réconciliation statutaire/IFRS.
+6. **Opinion & reporting** : rapport de la fonction actuarielle ; cycle ORSA annuel.
+""",
+    (FINACT, "05-runbook"): """# Runbook — finance & actuariat
+
+> **Niveau : RUNBOOK** — gestes opérationnels. *Simulation.*
+
+- **Lancer le calcul de provisionnement** : exécuter la méthode sur les triangles de la période.
+- **Produire le SCR / fonds propres** : générer le ratio de solvabilité + le tableau de couverture.
+- **Clôturer** : états IFRS 17 + réconciliation statutaire.
+- **Escalader** : ratio de solvabilité sous le seuil d'appétit → alerte CFO + Conseil (ORSA).
+""",
+    # ───────────────────────── INTERNATIONAL PROGRAMMES ─────────────────────────
+    (INTL, "01-politique-policy"): """# Politique — programmes internationaux
+
+> **Niveau : POLITIQUE** · Titulaire : Direction Programmes Internationaux · Revue annuelle. *Simulation.*
+
+## 1. Objet
+Gouverner les **programmes master + polices locales** pour les clients multinationaux, en conformité avec
+les règles d'assurance **admise / non-admise**, la fiscalité locale et les sanctions.
+
+## 2. Principes directeurs
+1. **Conformité territoriale** — polices locales **admises** là où le non-admis est interdit ; fronting agréé.
+2. **DIC/DIL** — la master comble les écarts de garantie/limite des polices locales (Difference in Conditions/Limits).
+3. **Allocation de prime** — répartition master/locales documentée + **taxes (TCA/IPT) par territoire**.
+4. **Sécurité du fronting** — partenaires locaux sélectionnés (notation, agrément).
+5. **Cash-before-cover** — encaissement avant prise d'effet là où requis.
+6. **Sanctions** — filtrage des territoires/parties.
+
+## 3. Références
+Règles admis/non-admis par pays · fiscalité assurance (IPT) · IDD · Politique LCB-FT & sanctions · Politique de souscription.
+""",
+    (INTL, "02-standard"): """# Standard — programmes internationaux
+
+> **Niveau : STANDARD** — exigences obligatoires. *Simulation.*
+
+| # | Exigence | Contrôle |
+|---|---|---|
+| I1 | Police **locale admise** émise là où le non-admis est interdit | Contrôle de conformité pays |
+| I2 | Partenaire de **fronting** agréé + notation minimale | Contrôle de sécurité |
+| I3 | **Taxes / IPT** calculées + réglées par territoire | Contrôle fiscal |
+| I4 | **Cash-before-cover** respecté là où requis | Contrôle d'encaissement |
+| I5 | Allocation de prime master/locales **documentée + cohérente** | Contrôle d'allocation |
+| I6 | Filtrage **sanctions** des territoires/parties | Écran de conformité |
+""",
+    (INTL, "03-directive-guideline"): """# Directive — programmes internationaux
+
+> **Niveau : DIRECTIVE** — la référence métier. *Simulation.*
+
+## 1. Structurer un programme
+Définir la **police master** (groupe) + les **polices locales** (filiales) ; préciser le **fronting** et les **DIC/DIL**.
+
+## 2. Allocation de prime & taxes
+Allouer la prime entre master et locales selon l'exposition par territoire ; calculer les **taxes/IPT**
+locales. La **prime quittancée** locale intègre l'IPT applicable (cf. Pricing — Directive, étape taxes/fees).
+
+## 3. Conformité
+Vérifier admis/non-admis par pays, les obligations fiscales, le cash-before-cover et les sanctions avant émission locale.
+""",
+    (INTL, "04-procedure"): """# Procédure — mise en place d'un programme & émission locale
+
+> **Niveau : PROCÉDURE** — pas-à-pas. *Simulation.*
+
+1. **Cadrer le programme** : périmètre pays, structure master/locales, fronting, DIC/DIL.
+2. **Vérifier la conformité** : admis/non-admis, fiscalité (IPT), sanctions par territoire.
+3. **Allouer la prime** : répartition master/locales + taxes locales.
+4. **Émettre la master** + instruire les **polices locales** (partenaires de fronting).
+5. **Encaisser** : cash-before-cover là où requis.
+6. **Réconcilier** : flux cross-border (primes, taxes, sinistres) suivis et rapprochés.
+""",
+    (INTL, "05-runbook"): """# Runbook — programmes internationaux
+
+> **Niveau : RUNBOOK** — gestes opérationnels. *Simulation.*
+
+- **Enregistrer une police locale** : territoire + partenaire de fronting + conditions (DIC/DIL vs master).
+- **Calculer l'allocation + l'IPT** : répartir la prime par territoire + appliquer la taxe locale.
+- **Contrôler la conformité** : admis/non-admis + sanctions + cash-before-cover avant émission.
+- **Réconcilier** : rapprocher les flux cross-border (primes cédées, taxes, sinistres) par période.
 """,
 }
 

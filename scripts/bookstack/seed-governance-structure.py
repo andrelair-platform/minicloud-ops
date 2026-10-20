@@ -39,9 +39,16 @@ SHELVES = [
     ("Corporate / Direction", "Corporate / Direction — gouvernance d'entreprise, délégations"),
 ]
 
-# Shelves that get a governance book now (need-first: the 3 Phase-1 pilots + IT/Security/DORA for the
-# live platform/IS capabilities annotated in Backstage). Others get a book when a live capability maps to them.
-PILOTS = ["RH", "Juridique", "Underwriting", "IT / Security / DORA"]
+# Shelves that get a governance book. Wave 1: the 3 Phase-1 pilots + IT/Security/DORA. Wave 2
+# (2026-10-20): the business/LOB domains adjacent to the underwriting→pricing chain, so the pricing
+# evolution (ADR-009) sits under a complete business-governance umbrella. (Claims #11, Compliance &
+# Governance — mapped to the ktayl-compliance obligations register — and Corporate/Direction keep their
+# own homes and are intentionally not duplicated here.)
+PILOTS = [
+    "RH", "Juridique", "Underwriting", "IT / Security / DORA",
+    "Pricing & Portfolio", "Risk Engineering", "Reinsurance & Captive",
+    "Finance & Actuarial", "International Programmes",
+]
 
 # the 5-level documentation hierarchy (§6) — template pages seeded in each pilot's governance book
 HIERARCHY = [
@@ -78,6 +85,13 @@ EXTRA_PAGES = {
          "critiques.\n\nFamilles de gouvernance couvertes : **03 Underwriting · 04 Pricing & Portfolio · "
          "07 Risk Engineering**. Registre de capacités (Backstage) : colonnes Policy/Standard/Guideline/"
          "Procedure/Controls/Approval/Evidence (§8)."),
+    ],
+    "Pricing & Portfolio": [
+        ("00 Complément exécutable (policy-as-code)",
+         "La directive de tarification est en partie **exécutée** par `ktayl-underwriting` : barème "
+         "approuvé/versionné (`rate_table`), plancher technique, décomposition explicable et manifeste de "
+         "cotation. L'intranet reste la **source de vérité**. Architecture : ADR-009 (modèle de perte → "
+         "tarif approuvé → moteur déterministe ; un modèle est une boîte noire à l'entraînement, jamais au pricing)."),
     ],
 }
 
