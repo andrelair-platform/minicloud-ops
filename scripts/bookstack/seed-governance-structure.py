@@ -102,6 +102,16 @@ EXTRA_PAGES = {
          "Charte d'usage du système d'information — **annexe au règlement intérieur**, signée à l'embauche. "
          "Titulaire RH, co-rédigée avec la Sécurité/IT (RSSI). *Gabarit — contenu rempli par la population.*"),
     ],
+    "IT / Security / DORA": [
+        ("00 Politique d'accès (IAM/IGA)",
+         "Gouvernance des accès — moindre privilège, JML (joiner/mover/leaver), double approbation, SoD, "
+         "revue/certification des accès, PAM. Exécutée par `ktayl-iam` (#17) sur Authentik. *Gabarit.*"),
+    ],
+    "Juridique": [
+        ("00 Matrice de délégation de signature",
+         "Autorité d'engagement corporate — qui peut signer/engager la société, par montant et type d'acte. "
+         "Distincte de la matrice DoA de **souscription** (autorité de bind). *Gabarit.*"),
+    ],
 }
 
 
