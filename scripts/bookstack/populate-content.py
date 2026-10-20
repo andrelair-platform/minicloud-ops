@@ -101,6 +101,21 @@ Les seuils chiffrés et la matrice DoA font l'objet de la **Directive de souscri
 | Lignes financières | D&O ETI non cotées | Sociétés cotées | Entités sous enquête |
 | Marine | Marchandises conteneurisées | Vrac spécialisé | Zones sous embargo |
 
+## 1bis. Segmentation marché (taille de risque)
+L'appétit et le mode de traitement se déclinent par **segment de marché** — orthogonal à la branche.
+Bornes indicatives (simulation) ; le segment conditionne l'autorité (DoA §3) et l'**approche tarifaire**
+(voir Pricing — Directive §4).
+
+| Segment | Profil indicatif (CA) | Prime indicative | Traitement | Autorité (DoA) | Distribution |
+|---|---|---|---|---|---|
+| **TPE / PME (Small)** | < 50 M€ | < 25 k€ | produits standardisés, souscription allégée/volume, RE rare | N1 | directe / courtage de proximité |
+| **Middle Market (ETI)** | 50 M€ – 1,5 Md€ | 25 k€ – 250 k€ | semi-sur-mesure, RE sélective, référral ciblé | N2–N3 (four-eyes) | courtage |
+| **Grandes entreprises / Corporate** | > 1,5 Md€ | > 250 k€ | sur-mesure, RE obligatoire, lignes/co-assurance fréquentes | N4 — CUO / Comité | courtage grands comptes |
+| **Multinational** | groupes multi-pays | programme | master + polices locales | Comité | courtage international (voir Programmes internationaux) |
+
+Le **Middle Market (ETI)** est le cœur de cible : assez complexe pour justifier une souscription experte,
+assez standard pour rester tarifé sur base GLM + jugement borné (plancher technique maintenu).
+
 ## 2. Déclencheurs de référral (obligatoire)
 | Critère | Seuil → référral | Référer vers |
 |---|---|---|
@@ -485,6 +500,20 @@ COÛT DU SINISTRE ATTENDU  (modèle de perte GLM fréquence × sévérité)
 ## 3. Dérogations & référral
 Prime < plancher technique → **référral CUO**. Ajustement commercial au-delà de la bande → autorité supérieure.
 La **réassurance n'est pas une remise par risque** : elle alimente la provision CAT + le coût du capital au niveau **portefeuille** (voir Réassurance & Captive).
+
+## 4. Approche tarifaire par segment de marché
+La **méthode** de tarification dépend du segment (voir Underwriting — Directive §1bis) ; le **plancher
+technique** et le manifeste s'appliquent dans tous les cas.
+
+| Segment | Méthode | Jugement souscripteur |
+|---|---|---|
+| **TPE / PME (Small)** | tarif **portefeuille / GLM algorithmique** (barème pur) | nul ou minime |
+| **Middle Market (ETI)** | **GLM + jugement borné** (ajustement commercial dans la bande, tracé) | encadré, dans la DoA |
+| **Grandes entreprises / Corporate** | **tarification individuelle** (expérience / exposition), RE obligatoire | fort, souvent référé CUO |
+| **Multinational** | allocation par territoire + **taxes/IPT** | via Programmes internationaux |
+
+Quel que soit le segment, une prime sous le **plancher technique** exige un référral CUO ; l'ajustement
+commercial reste **borné et tracé** (jamais de dérogation silencieuse).
 
 ➡️ **Exécution :** relativités, plancher et manifeste appliqués par `ktayl-underwriting` — voir *Complément exécutable*.
 """,
