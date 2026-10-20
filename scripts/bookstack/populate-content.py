@@ -358,6 +358,55 @@ Standard, Directive, Procédure ci-contre.
 - **Changer de poste** : ajuster les groupes `Direction …` → les rôles applicatifs (BookStack, etc.) se resynchronisent à la connexion.
 - **Départ** : workflow d'offboarding → désactivation + retrait des groupes → accès coupés immédiatement.
 """,
+    (RH, "00-charte-informatique-numerique"): """# Charte informatique & numérique
+
+> **Annexe au règlement intérieur** · Titulaire : **RH** · Co-rédaction : **RSSI / IT** · Consultation **CSE**
+> · **Signée à l'embauche** · Revue annuelle. *Document de simulation — ktayl-solution.*
+
+## 1. Objet & portée
+Définir les règles de **bon usage** du système d'information de ktayl-solution. S'applique à tout
+collaborateur, intérimaire ou prestataire disposant d'un accès. La charte est une **annexe au règlement
+intérieur** : son non-respect expose à des sanctions disciplinaires.
+
+## 2. Contexte BYOD (à lire en premier)
+ktayl-solution **ne gère pas d'appareils** (pas de MDM/poste fourni) : chacun utilise son **matériel
+personnel**. La sécurité repose donc sur l'**identité, la session, l'application et la donnée** — pas sur
+l'appareil (voir *workplace-architecture*). Principe : **appareil = non fiable → l'identité est le périmètre**.
+- Accès **navigateur-first** aux applications derrière **Authentik (SSO + MFA)**.
+- La donnée reste **côté serveur** ; éviter toute copie locale, surtout pour les données sensibles.
+
+## 3. Règles d'usage
+1. **Comptes & authentification** — un compte nominatif ; **MFA obligatoire** ; aucun partage d'identifiants ; ne jamais contourner le SSO.
+2. **Messagerie & internet** — usage professionnel ; usage privé résiduel toléré et raisonnable ; pas d'envoi de données RESTRICTED hors des canaux autorisés.
+3. **Données & classification** — respecter les classes **P0–P3** ; pas de stockage de données CONFIDENTIEL/RESTREINT sur un support personnel ; privilégier l'édition **en ligne** (Nextcloud/OnlyOffice).
+4. **Sécurité de la session** — OS et navigateur à jour ; verrouillage de l'appareil ; signaler sans délai tout incident/perte/suspicion (→ Sécurité/IT, cycle DORA).
+5. **Secrets** — aucun secret (mot de passe, token, clé) en clair dans un e-mail, un ticket ou un dépôt.
+6. **Interdits** — contournement des contrôles, installation d'outils non autorisés sur les surfaces gérées, exfiltration de données, usage illicite.
+
+## 4. Données personnelles & supervision (RGPD)
+La journalisation et la supervision sont **proportionnées**, à finalité de **sécurité** et de conformité
+(DORA), **sans surveillance individuelle permanente**. Les salariés en sont **informés** ; les droits RGPD
+(accès, rectification…) s'exercent auprès du **DPO**. Les durées de conservation des journaux sont définies
+par la politique de sécurité.
+
+## 5. BYOD — responsabilités du collaborateur
+Faute d'appareil géré (pas d'effacement à distance), l'employé s'engage à : verrouiller l'appareil,
+maintenir l'OS à jour, ne pas conserver de données RESTREINT en local, et déclarer immédiatement la perte
+d'un appareil ayant un accès actif (→ révocation de session côté identité).
+
+## 6. Sanctions
+Tout manquement peut entraîner une **sanction disciplinaire** (règlement intérieur) et, le cas échéant, des
+poursuites civiles/pénales.
+
+## 7. Gouvernance & références
+Titulaire **RH** ; co-rédaction **RSSI/IT** ; **consultation CSE** ; **signature individuelle** à l'embauche ;
+revue annuelle. Références : **Code du travail** (règlement intérieur) · **RGPD** · **DORA** (résilience ICT,
+voir *IT / Security / DORA*) · Politique de sécurité · Politique d'accès **IAM/IGA** (`ktayl-iam`) ·
+*workplace-architecture* (BYOD, identité = périmètre).
+
+> **Acceptation :** la signature (onboarding) vaut acceptation. Elle est tracée dans le dossier RH ;
+> l'accès effectif est conditionné aux approbations IAM (voir *Runbook — gestion des comptes*).
+""",
     # ───────────────────────── JURIDIQUE ─────────────────────────
     (JUR, "01-politique-policy"): """# Politique juridique
 
