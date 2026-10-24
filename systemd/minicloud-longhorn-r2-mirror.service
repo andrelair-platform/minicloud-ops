@@ -1,0 +1,16 @@
+[Unit]
+Description=Off-site DR mirror: controller MinIO 'longhorn' backup bucket -> Cloudflare R2
+# Replicates the Longhorn backup bucket (local MinIO, same room) to R2 (off-site, different
+# provider) for room-level DR. minicloud-gitops#1936. Triggered by the .timer (no [Install]).
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Run as ktayl: the mc aliases (minilocal, r2cnpg) live in /home/ktayl's mc config.
+User=ktayl
+Group=ktayl
+Environment=HOME=/home/ktayl
+ExecStart=/usr/local/bin/minicloud-longhorn-r2-mirror
+StandardOutput=append:/var/log/minicloud-longhorn-r2-mirror.log
+StandardError=append:/var/log/minicloud-longhorn-r2-mirror.log

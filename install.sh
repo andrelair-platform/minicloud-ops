@@ -60,6 +60,7 @@ echo "=== Installing swift-mac WoL script ==="
 install -m 755 "$REPO_DIR/scripts/swift-mac-wake.py" /usr/local/bin/minicloud-wake-swift-mac
 install -m 755 "$REPO_DIR/scripts/maas-power-broker.py" /usr/local/bin/maas-power-broker
 install -m 755 "$REPO_DIR/scripts/bind9-guard.py" /usr/local/bin/minicloud-bind9-guard
+install -m 755 "$REPO_DIR/scripts/backup/mirror-minio-to-r2.sh" /usr/local/bin/minicloud-longhorn-r2-mirror
 
 echo "=== Installing systemd services ==="
 cp "$REPO_DIR/systemd/minicloud-post-boot-check.service" "$SYSTEMD_DIR/"
@@ -74,6 +75,8 @@ cp "$REPO_DIR/systemd/minicloud-bind9-guard.service" "$SYSTEMD_DIR/"
 cp "$REPO_DIR/systemd/minicloud-bind9-guard.timer" "$SYSTEMD_DIR/"
 cp "$REPO_DIR/systemd/minicloud-sdlc-loop.service" "$SYSTEMD_DIR/"
 cp "$REPO_DIR/systemd/minicloud-sdlc-loop.timer" "$SYSTEMD_DIR/"
+cp "$REPO_DIR/systemd/minicloud-longhorn-r2-mirror.service" "$SYSTEMD_DIR/"
+cp "$REPO_DIR/systemd/minicloud-longhorn-r2-mirror.timer" "$SYSTEMD_DIR/"
 
 systemctl daemon-reload
 systemctl enable minicloud-post-boot-check.service
@@ -83,6 +86,7 @@ systemctl enable minicloud-wake-swift-mac.service
 systemctl enable --now maas-power-broker.service
 systemctl enable --now minicloud-bind9-guard.timer
 systemctl enable --now minicloud-sdlc-loop.timer
+systemctl enable --now minicloud-longhorn-r2-mirror.timer
 # Timer is NOT enabled automatically — operator must set UUID first:
 #   edit /etc/minicloud/heartbeat.env
 #   systemctl enable --now minicloud-heartbeat.timer

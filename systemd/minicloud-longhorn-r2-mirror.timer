@@ -1,0 +1,12 @@
+[Unit]
+Description=Daily off-site DR mirror of the Longhorn backup bucket to Cloudflare R2
+# Longhorn daily-backup runs 02:00 UTC (retain 3); kine-backup 02:30; this mirrors the settled
+# result off-site at 04:00 UTC. Persistent=true catches a missed run after downtime.
+
+[Timer]
+OnCalendar=*-*-* 04:00:00 UTC
+Persistent=true
+AccuracySec=5min
+
+[Install]
+WantedBy=timers.target
