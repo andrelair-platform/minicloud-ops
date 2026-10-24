@@ -29,9 +29,12 @@ MC="${MC:-/home/ktayl/.local/bin/mc}"
 SRC_ALIAS_BUCKET="${1:-minilocal/longhorn}"
 DST_ALIAS_BUCKET="${2:-r2cnpg/minicloud-longhorn-offsite}"
 MIN_SRC_OBJECTS="${MIN_SRC_OBJECTS:-50}"   # safety floor: refuse to mirror-with-remove below this
-LOG="${LOG:-/var/log/minicloud-longhorn-r2-mirror.log}"
 
-log() { echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] $*" | tee -a "$LOG" ; }
+# Log to STDOUT only. The systemd unit captures stdout via StandardOutput=append:<logfile>
+# (written as root); a manual run prints to the terminal. The script must NOT also write the
+# file itself — a second writer (as ktayl) would hit permission-denied on the root-owned append
+# target (abort under set -e) and duplicate every line. stdout is the single source.
+log() { echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] $*" ; }
 
 log "=== off-site mirror start: ${SRC_ALIAS_BUCKET} -> ${DST_ALIAS_BUCKET} ==="
 
@@ -53,7 +56,7 @@ fi
 
 # Mirror: --overwrite (update changed) + --remove (delete from R2 what left MinIO = track retention)
 log "mirroring (--overwrite --remove)…"
-"$MC" mirror --overwrite --remove "$SRC_ALIAS_BUCKET" "$DST_ALIAS_BUCKET" 2>&1 | tee -a "$LOG"
+"$MC" mirror --overwrite --remove "$SRC_ALIAS_BUCKET" "$DST_ALIAS_BUCKET" 2>&1
 
 # Report resulting off-site footprint
 DST_DU="$("$MC" du "$DST_ALIAS_BUCKET" 2>/dev/null | tail -1 || echo '?')"
