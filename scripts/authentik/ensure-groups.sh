@@ -8,12 +8,13 @@
 #
 # Requires: kubectl context with access to the authentik namespace. Run on the controller.
 #
-# Why ak-shell-dash-c (not stdin): the INTERACTIVE ak shell mangles a multi-statement script read on
-# stdin (os.environ came back wrong, yielding a bogus group name). Running the code non-interactively
-# via the -c flag fixes it; base64 keeps the payload quote-safe regardless of the py file content.
-# NOTE: keep this comment block free of backticks + decimal tokens -- a stray one corrupted the parse.
+# GOTCHA: do NOT name the groups variable GROUPS -- that is a bash BUILT-IN readonly array (the current
+# user's group IDs); assigning to it is ignored, so "$GROUPS" expands to the user's primary GID (e.g.
+# 1000) and the wrong group gets created. Use a non-special name (GROUP_NAMES).
+# Run via ak-shell -c (not stdin): the interactive ak shell mangles a multi-statement script read on
+# stdin; -c runs it non-interactively, and base64 keeps the payload quote-safe.
 set -euo pipefail
-GROUPS="${1:?groups required (comma/newline separated)}"; MEMBER="${2:-}"
+GROUP_NAMES="${1:?groups required (comma/newline separated)}"; MEMBER="${2:-}"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 POD=$(kubectl get pod -n authentik -l app.kubernetes.io/component=server \
@@ -22,5 +23,5 @@ POD=$(kubectl get pod -n authentik -l app.kubernetes.io/component=server \
 
 B64=$(base64 < "$HERE/ensure-groups.py" | tr -d '\n')
 kubectl exec -i -n authentik "$POD" -- \
-  env AK_GROUPS="$GROUPS" AK_MEMBER="$MEMBER" \
+  env AK_GROUPS="$GROUP_NAMES" AK_MEMBER="$MEMBER" \
   ak shell -c "import base64; exec(base64.b64decode('$B64').decode())"
