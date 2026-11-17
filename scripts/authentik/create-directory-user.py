@@ -14,6 +14,7 @@ Inputs (environment variables):
   AK_EMAIL      required  the email claim OIDC emits → the key downstream apps match on
   AK_NAME       optional  display name (defaults to the username)
   AK_GROUP      optional  a group name to add the user to (get_or_create the membership)
+  AK_PASSWORD   optional  set a USABLE login password (seed/test users, or a reset); omitted = SSO-only
 
 Output (stdout): CREATED/EXISTS + pk + email; DONE=1.
 
@@ -29,14 +30,22 @@ email = os.environ["AK_EMAIL"]
 name = os.environ.get("AK_NAME") or username
 group = os.environ.get("AK_GROUP", "").strip()
 
+password = os.environ.get("AK_PASSWORD", "").strip()
 u = User.objects.filter(username=username).first()
-if u:
-    print(f"EXISTS user={username} pk={u.pk} email={u.email}")
-else:
+created = u is None
+if created:
     u = User.objects.create(username=username, email=email, name=name, is_active=True)
-    u.set_unusable_password()  # SSO-only — no local password
-    u.save()
     print(f"CREATED user={username} pk={u.pk} email={email}")
+else:
+    print(f"EXISTS user={username} pk={u.pk} email={u.email}")
+
+if password:
+    u.set_password(password)  # usable login (seed/test user, or a password reset)
+    u.save()
+    print("  + password set (usable login)")
+elif created:
+    u.set_unusable_password()  # SSO-only — no local password (default)
+    u.save()
 
 if group:
     g = Group.objects.filter(name=group).first()

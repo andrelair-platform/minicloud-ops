@@ -7,6 +7,9 @@
 # Usage:  scripts/authentik/create-directory-user.sh <username> <email> [display-name] [group]
 # Example: scripts/authentik/create-directory-user.sh 100002 100002@ktayl.local "Marie Leclerc"
 #
+# Set AK_PASSWORD in the environment for a USABLE login password (seed/test users); default is
+# SSO-only (unusable password). Pass it via env (not argv) so it stays out of the process table.
+#
 # Requires: kubectl context with access to the `authentik` namespace. Run on the controller.
 set -euo pipefail
 USERNAME="${1:?username required}"; EMAIL="${2:?email required}"; NAME="${3:-}"; GROUP="${4:-}"
@@ -17,5 +20,5 @@ POD=$(kubectl get pod -n authentik -l app.kubernetes.io/component=server \
 [ -n "$POD" ] || { echo "ERROR: no authentik server pod found" >&2; exit 1; }
 
 kubectl exec -i -n authentik "$POD" -- \
-  env AK_USERNAME="$USERNAME" AK_EMAIL="$EMAIL" ${NAME:+AK_NAME="$NAME"} ${GROUP:+AK_GROUP="$GROUP"} \
+  env AK_USERNAME="$USERNAME" AK_EMAIL="$EMAIL" ${NAME:+AK_NAME="$NAME"} ${GROUP:+AK_GROUP="$GROUP"} ${AK_PASSWORD:+AK_PASSWORD="$AK_PASSWORD"} \
   ak shell < "$HERE/create-directory-user.py"
