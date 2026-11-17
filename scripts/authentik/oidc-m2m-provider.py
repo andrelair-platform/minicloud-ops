@@ -47,9 +47,13 @@ signing = CertificateKeyPair.objects.filter(name__icontains="self-signed").order
 if signing is None:
     signing = CertificateKeyPair.objects.exclude(key_data="").first()
 
-# Minimal claims: the consumer (ktayl-core) only requires a signature-valid token from a trusted issuer
-# (.anyRequest().authenticated()) — no custom scope. openid is enough to shape a JWT.
-scopes = list(ScopeMapping.objects.filter(scope_name__in=["openid"]))
+# Scopes: `openid` shapes the JWT (enough when the consumer only checks signature+iss, e.g. ktayl-core's
+# .anyRequest().authenticated()). A consumer that checks a `scope` claim (e.g. underwriting requires
+# `underwriting:write`) needs that ScopeMapping attached too → pass AK_EXTRA_SCOPES=scope1,scope2 (the
+# ScopeMapping.scope_name values; they must already exist). The client must also REQUEST them in its
+# client_credentials call (`&scope=...`). First extra-scope caller: ktayl-core→underwriting (SUB-02).
+_extra = [s.strip() for s in os.environ.get("AK_EXTRA_SCOPES", "").split(",") if s.strip()]
+scopes = list(ScopeMapping.objects.filter(scope_name__in=["openid", *_extra]))
 
 prov, _ = OAuth2Provider.objects.get_or_create(
     name=slug, defaults=dict(authorization_flow=authz, signing_key=signing)
