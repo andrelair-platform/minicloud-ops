@@ -10,6 +10,7 @@ echo "=== Symlinking package (no pip needed) ==="
 mkdir -p /usr/local/lib/minicloud
 ln -sfn "$REPO_DIR/recovery_check" /usr/local/lib/minicloud/recovery_check
 ln -sfn "$REPO_DIR/sdlc_loop" /usr/local/lib/minicloud/sdlc_loop
+ln -sfn "$REPO_DIR/doc_freshness" /usr/local/lib/minicloud/doc_freshness
 
 echo "=== Creating entry point ==="
 cat > /usr/local/bin/minicloud-recovery-check << 'ENTRY'
@@ -32,6 +33,16 @@ exec python3 -m sdlc_loop.main "$@"
 ENTRY
 chmod +x /usr/local/bin/minicloud-sdlc-loop
 echo "Entry point: /usr/local/bin/minicloud-sdlc-loop"
+
+cat > /usr/local/bin/minicloud-docs-freshness << 'ENTRY'
+#!/bin/bash
+# Docs-freshness check — compare published docs' asserted facts to the live cluster. Symlink-backed.
+export PYTHONPATH="/usr/local/lib/minicloud${PYTHONPATH:+:$PYTHONPATH}"
+export KUBECONFIG="${KUBECONFIG:-/home/ktayl/.kube/config}"
+exec python3 -m doc_freshness.main "$@"
+ENTRY
+chmod +x /usr/local/bin/minicloud-docs-freshness
+echo "Entry point: /usr/local/bin/minicloud-docs-freshness"
 
 echo "=== Creating log files (world-writable so ktayl and root can both append) ==="
 for f in /var/log/minicloud-recovery.log /var/log/minicloud-rto.log /var/log/minicloud-remediation.log /var/log/minicloud-wol.log; do
@@ -77,6 +88,8 @@ cp "$REPO_DIR/systemd/minicloud-sdlc-loop.service" "$SYSTEMD_DIR/"
 cp "$REPO_DIR/systemd/minicloud-sdlc-loop.timer" "$SYSTEMD_DIR/"
 cp "$REPO_DIR/systemd/minicloud-longhorn-r2-mirror.service" "$SYSTEMD_DIR/"
 cp "$REPO_DIR/systemd/minicloud-longhorn-r2-mirror.timer" "$SYSTEMD_DIR/"
+cp "$REPO_DIR/systemd/minicloud-docs-freshness.service" "$SYSTEMD_DIR/"
+cp "$REPO_DIR/systemd/minicloud-docs-freshness.timer" "$SYSTEMD_DIR/"
 
 systemctl daemon-reload
 systemctl enable minicloud-post-boot-check.service
@@ -87,6 +100,7 @@ systemctl enable --now maas-power-broker.service
 systemctl enable --now minicloud-bind9-guard.timer
 systemctl enable --now minicloud-sdlc-loop.timer
 systemctl enable --now minicloud-longhorn-r2-mirror.timer
+systemctl enable --now minicloud-docs-freshness.timer
 # Timer is NOT enabled automatically — operator must set UUID first:
 #   edit /etc/minicloud/heartbeat.env
 #   systemctl enable --now minicloud-heartbeat.timer
@@ -110,3 +124,9 @@ echo "  Tier-3 (3sigma) opens a GitHub issue ONLY if a scoped token is present:"
 echo "    echo '<fine-grained PAT, issues:write on minicloud-gitops>' > ~/.sdlc-loop-github-token"
 echo "    chmod 600 ~/.sdlc-loop-github-token"
 echo "  Without the token the loop still logs + writes intent.md (issue step is skipped)."
+echo ""
+echo "=== Docs-freshness check (is the published doc still true?) ==="
+echo "  Runs weekly (Mon 06:30 UTC); writes ~/minicloud-ops-intents/docs-freshness.md; exit 1 on drift."
+echo "  Verify:   minicloud-docs-freshness --dry-run"
+echo "  Report:   cat ~/minicloud-ops-intents/docs-freshness.md"
+echo "  Journal:  journalctl -u minicloud-docs-freshness.service --no-pager | tail"

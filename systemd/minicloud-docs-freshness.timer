@@ -1,0 +1,10 @@
+[Unit]
+Description=Run the docs-freshness check weekly (Mon 06:30 UTC)
+
+[Timer]
+OnCalendar=Mon *-*-* 06:30:00
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

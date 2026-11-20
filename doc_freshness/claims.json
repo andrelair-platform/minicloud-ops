@@ -1,0 +1,53 @@
+{
+  "_comment": "Each claim = a fact a published doc asserts + how to read it live + how to compare. When a check DRIFTS, update the doc at `doc`/`anchor` to the live value (or fix the cluster if the doc is the intended state), then bump `expect` here to match. compare: eq | approx(|live-expect|<=tolerance) | gte | lte | set_eq. Grounded against the live cluster 2026-11-20.",
+  "claims": [
+    {
+      "id": "nodes",
+      "doc": "developer-platform/production-stack-architecture",
+      "anchor": "Platform at a Glance — Nodes",
+      "desc": "cluster node count",
+      "probe": "count_resource", "args": {"kind": "nodes"},
+      "expect": 6, "compare": "eq"
+    },
+    {
+      "id": "k3s_version",
+      "doc": "developer-platform/production-stack-architecture",
+      "anchor": "Platform at a Glance — k3s version",
+      "desc": "uniform k3s version across all nodes",
+      "probe": "k3s_versions", "args": {},
+      "expect": ["v1.36.3+k3s1"], "compare": "set_eq"
+    },
+    {
+      "id": "argocd_apps",
+      "doc": "developer-platform/production-stack-architecture",
+      "anchor": "Platform at a Glance — ArgoCD apps (~119)",
+      "desc": "live ArgoCD Applications",
+      "probe": "count_resource", "args": {"kind": "applications", "namespace": "argocd"},
+      "expect": 119, "tolerance": 15, "compare": "approx"
+    },
+    {
+      "id": "prometheusrules",
+      "doc": "developer-platform/production-stack-architecture",
+      "anchor": "Platform at a Glance + Observability — PrometheusRule objects",
+      "desc": "PrometheusRule objects cluster-wide",
+      "probe": "count_resource", "args": {"kind": "prometheusrules", "namespace": "all"},
+      "expect": 68, "tolerance": 8, "compare": "approx"
+    },
+    {
+      "id": "grafana_dashboards",
+      "doc": "developer-platform/production-stack-architecture",
+      "anchor": "Platform at a Glance + Observability — Grafana dashboards (43+)",
+      "desc": "Grafana dashboard ConfigMaps (label grafana_dashboard=1)",
+      "probe": "count_resource", "args": {"kind": "cm", "namespace": "all", "selector": "grafana_dashboard=1"},
+      "expect": 43, "compare": "gte"
+    },
+    {
+      "id": "gatekeeper_constraints",
+      "doc": "developer-platform/production-stack-architecture",
+      "anchor": "Security — Gatekeeper OPA constraints",
+      "desc": "Gatekeeper constraint objects",
+      "probe": "count_resource", "args": {"kind": "constraints", "namespace": "all"},
+      "expect": 14, "tolerance": 3, "compare": "approx"
+    }
+  ]
+}

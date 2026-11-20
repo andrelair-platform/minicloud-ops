@@ -1,0 +1,12 @@
+[Unit]
+Description=Docs-freshness check — compare published docs' asserted facts against the live cluster
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ktayl
+Environment=KUBECONFIG=/home/ktayl/.kube/config
+ExecStart=/usr/local/bin/minicloud-docs-freshness
+# Non-zero exit on drift is expected — the report at ~/minicloud-ops-intents/docs-freshness.md is the signal.
+SuccessExitStatus=0 1
