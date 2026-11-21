@@ -36,21 +36,52 @@ DEFAULT_DB = {"postgres": "postgres", "mariadb": "", "clickhouse": "default"}
 # secret keys that commonly hold the database name (checked in order)
 DBNAME_KEYS = ["dbname", "database", "DB_NAME", "POSTGRES_DB",
                "MARIADB_DATABASE", "MYSQL_DATABASE", "CLICKHOUSE_DB"]
+# secret keys that hold a full connection DSN (parse its path for the db name)
+URL_KEYS = ["database-url", "DATABASE_URL", "db-url"]
+# Explicit dbname overrides keyed by namespace — for servers whose secret's dbname key is WRONG or absent
+# (verified against the live DB). authentik's -app secret reports `postgres` but its 215 tables are in
+# `authentik`; the plain-STS dev servers store no dbname in their secret. Multi-DB servers (ai = 6 app DBs,
+# backstage = 13 per-plugin DBs) are deliberately LEFT on the default so the user navigates the DB tree.
+DBNAME_OVERRIDE = {
+    "authentik": "authentik",
+    "ktayl-iam": "ktayl_iam",      # the dev StatefulSet (prod ns is ktayl-iam-prod, resolves from -app)
+    "temporal": "temporal",
+    "retrieva-dev": "retrieva",
+}
 
 
 def resolve_dbname(ns: str, secret: str, engine: str) -> str:
-    """Read ONLY the database-name key from the secret (never the password). Fall back on any failure."""
+    """Resolve the connect DB name. Priority: explicit override > DSN path > secret dbname key > default.
+    Reads ONLY the dbname/DSN (never the password). Falls back safely on any error."""
+    if ns in DBNAME_OVERRIDE:
+        return DBNAME_OVERRIDE[ns]
     try:
         out = subprocess.run(
             ["kubectl", "--context", KCTX, "-n", ns, "get", "secret", secret, "-o", "json"],
             capture_output=True, text=True, timeout=15, check=True).stdout
-        data = json.loads(out).get("data", {})
+        data = {k: base64.b64decode(v).decode() for k, v in json.loads(out).get("data", {}).items()}
+        for key in URL_KEYS:                       # a DSN carries the real db in its path
+            if data.get(key):
+                from urllib.parse import urlparse
+                db = urlparse(data[key]).path.lstrip("/")
+                if db:
+                    return db
         for key in DBNAME_KEYS:
-            if key in data:
-                return base64.b64decode(data[key]).decode().strip()
+            if data.get(key):
+                return data[key].strip()
     except Exception:
         pass
     return DEFAULT_DB[engine]
+
+
+# connection-type definitions (DBeaver renders by the type's colour; prod = red + confirm prompts).
+CONNECTION_TYPES = {
+    "dev": {"name": "Development", "color": "255,255,255", "description": "dev namespaces — regenerable",
+            "auto-commit": True, "confirm-execute": False, "confirm-data-change": False},
+    "prod": {"name": "Production", "color": "247,211,215", "colorDark": "100,30,35",
+             "description": "PROD data — red + read-only by default",
+             "auto-commit": False, "confirm-execute": True, "confirm-data-change": True},
+}
 
 
 def main() -> None:
@@ -68,6 +99,8 @@ def main() -> None:
         conf: dict[str, object] = {
             "host": "localhost", "port": lport, "database": db,
             "url": url_tmpl.format(port=lport, db=db),
+            "configurationType": "MANUAL",
+            "type": "prod" if is_prod else "dev",   # DBeaver reads the connection-type from here
             "auth-model": "native",
         }
         if engine == "postgres":
@@ -77,10 +110,10 @@ def main() -> None:
             "name": label, "description": f"{ns}/{svc} via localhost:{lport} (port-forward)",
             "save-password": False, "read-only": is_prod,
             "folder": "Production" if is_prod else "Development",
-            "connection-type": "prod" if is_prod else "dev",
             "configuration": conf,
         }
-    print(json.dumps({"folders": folders, "connections": connections}, indent=2))
+    print(json.dumps({"folders": folders, "connections": connections,
+                      "connection-types": CONNECTION_TYPES}, indent=2))
 
 
 if __name__ == "__main__":
