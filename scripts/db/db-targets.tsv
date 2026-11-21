@@ -30,8 +30,8 @@
 55449	retrieva-dev	retrieva-postgres	5432	postgres	dev	retrieva (dev)	retrieva-secrets
 55450	temporal	temporal-postgresql	5432	postgres	prod	temporal	temporal-db-secret
 # ── MariaDB ──────────────────────────────────────────────────────────────────────────────
-53306	erp	erpnext-mariadb-sts	3306	mariadb	prod	erpnext	erpnext-dsn-config
+53306	erp	erpnext-mariadb-sts	3306	mariadb	prod	erpnext	erpnext
 53307	intranet	bookstack-mariadb	3306	mariadb	prod	bookstack	bookstack-db-secret
 53308	itsm	glpi-mariadb	3306	mariadb	prod	glpi itsm	ktayl-itsm-db
 # ── ClickHouse (HTTP 8123) ───────────────────────────────────────────────────────────────
-58123	langfuse	langfuse-clickhouse	8123	clickhouse	prod	langfuse olap	langfuse-clickhouse
+58123	langfuse	langfuse-secrets	8123	clickhouse	prod	langfuse olap	langfuse-secrets
