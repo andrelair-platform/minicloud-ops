@@ -1,0 +1,460 @@
+{
+  "folders": {
+    "Production": {
+      "description": "PROD data \u2014 red + read-only by default"
+    },
+    "Development": {
+      "description": "dev namespaces \u2014 regenerable"
+    }
+  },
+  "connections": {
+    "postgres-authentik-authentik-cnpg-rw": {
+      "provider": "postgresql",
+      "driver": "postgres-jdbc",
+      "name": "authentik SSO",
+      "description": "authentik/authentik-cnpg-rw via localhost:55432 (port-forward)",
+      "save-password": false,
+      "read-only": true,
+      "folder": "Production",
+      "connection-type": "prod",
+      "configuration": {
+        "host": "localhost",
+        "port": "55432",
+        "database": "postgres",
+        "url": "jdbc:postgresql://localhost:55432/postgres",
+        "auth-model": "native",
+        "provider-properties": {
+          "postgresql.show.all.databases": "true"
+        }
+      }
+    },
+    "postgres-chat-synapse-postgres-rw": {
+      "provider": "postgresql",
+      "driver": "postgres-jdbc",
+      "name": "matrix synapse",
+      "description": "chat/synapse-postgres-rw via localhost:55433 (port-forward)",
+      "save-password": false,
+      "read-only": true,
+      "folder": "Production",
+      "connection-type": "prod",
+      "configuration": {
+        "host": "localhost",
+        "port": "55433",
+        "database": "synapse",
+        "url": "jdbc:postgresql://localhost:55433/synapse",
+        "auth-model": "native",
+        "provider-properties": {
+          "postgresql.show.all.databases": "true"
+        }
+      }
+    },
+    "postgres-claims-claims-postgres-rw": {
+      "provider": "postgresql",
+      "driver": "postgres-jdbc",
+      "name": "claims (dev)",
+      "description": "claims/claims-postgres-rw via localhost:55434 (port-forward)",
+      "save-password": false,
+      "read-only": false,
+      "folder": "Development",
+      "connection-type": "dev",
+      "configuration": {
+        "host": "localhost",
+        "port": "55434",
+        "database": "claims",
+        "url": "jdbc:postgresql://localhost:55434/claims",
+        "auth-model": "native",
+        "provider-properties": {
+          "postgresql.show.all.databases": "true"
+        }
+      }
+    },
+    "postgres-claims-prod-claims-postgres-rw": {
+      "provider": "postgresql",
+      "driver": "postgres-jdbc",
+      "name": "claims (PROD)",
+      "description": "claims-prod/claims-postgres-rw via localhost:55435 (port-forward)",
+      "save-password": false,
+      "read-only": true,
+      "folder": "Production",
+      "connection-type": "prod",
+      "configuration": {
+        "host": "localhost",
+        "port": "55435",
+        "database": "claims",
+        "url": "jdbc:postgresql://localhost:55435/claims",
+        "auth-model": "native",
+        "provider-properties": {
+          "postgresql.show.all.databases": "true"
+        }
+      }
+    },
+    "postgres-data-platform-dp-postgres-rw": {
+      "provider": "postgresql",
+      "driver": "postgres-jdbc",
+      "name": "data platform",
+      "description": "data-platform/dp-postgres-rw via localhost:55436 (port-forward)",
+      "save-password": false,
+      "read-only": true,
+      "folder": "Production",
+      "connection-type": "prod",
+      "configuration": {
+        "host": "localhost",
+        "port": "55436",
+        "database": "analytics",
+        "url": "jdbc:postgresql://localhost:55436/analytics",
+        "auth-model": "native",
+        "provider-properties": {
+          "postgresql.show.all.databases": "true"
+        }
+      }
+    },
+    "postgres-ktayl-core-ktayl-core-cnpg-rw": {
+      "provider": "postgresql",
+      "driver": "postgres-jdbc",
+      "name": "ktayl-core (dev)",
+      "description": "ktayl-core/ktayl-core-cnpg-rw via localhost:55437 (port-forward)",
+      "save-password": false,
+      "read-only": false,
+      "folder": "Development",
+      "connection-type": "dev",
+      "configuration": {
+        "host": "localhost",
+        "port": "55437",
+        "database": "ktayl_core",
+        "url": "jdbc:postgresql://localhost:55437/ktayl_core",
+        "auth-model": "native",
+        "provider-properties": {
+          "postgresql.show.all.databases": "true"
+        }
+      }
+    },
+    "postgres-ktayl-core-prod-ktayl-core-cnpg-rw": {
+      "provider": "postgresql",
+      "driver": "postgres-jdbc",
+      "name": "ktayl-core (PROD)",
+      "description": "ktayl-core-prod/ktayl-core-cnpg-rw via localhost:55438 (port-forward)",
+      "save-password": false,
+      "read-only": true,
+      "folder": "Production",
+      "connection-type": "prod",
+      "configuration": {
+        "host": "localhost",
+        "port": "55438",
+        "database": "ktayl_core",
+        "url": "jdbc:postgresql://localhost:55438/ktayl_core",
+        "auth-model": "native",
+        "provider-properties": {
+          "postgresql.show.all.databases": "true"
+        }
+      }
+    },
+    "postgres-ktayl-dms-paperless-cnpg-rw": {
+      "provider": "postgresql",
+      "driver": "postgres-jdbc",
+      "name": "paperless DMS",
+      "description": "ktayl-dms/paperless-cnpg-rw via localhost:55439 (port-forward)",
+      "save-password": false,
+      "read-only": true,
+      "folder": "Production",
+      "connection-type": "prod",
+      "configuration": {
+        "host": "localhost",
+        "port": "55439",
+        "database": "paperless",
+        "url": "jdbc:postgresql://localhost:55439/paperless",
+        "auth-model": "native",
+        "provider-properties": {
+          "postgresql.show.all.databases": "true"
+        }
+      }
+    },
+    "postgres-ktayl-iam-prod-ktayl-iam-cnpg-rw": {
+      "provider": "postgresql",
+      "driver": "postgres-jdbc",
+      "name": "ktayl-iam (PROD)",
+      "description": "ktayl-iam-prod/ktayl-iam-cnpg-rw via localhost:55440 (port-forward)",
+      "save-password": false,
+      "read-only": true,
+      "folder": "Production",
+      "connection-type": "prod",
+      "configuration": {
+        "host": "localhost",
+        "port": "55440",
+        "database": "ktayl_iam",
+        "url": "jdbc:postgresql://localhost:55440/ktayl_iam",
+        "auth-model": "native",
+        "provider-properties": {
+          "postgresql.show.all.databases": "true"
+        }
+      }
+    },
+    "postgres-langfuse-langfuse-postgres-rw": {
+      "provider": "postgresql",
+      "driver": "postgres-jdbc",
+      "name": "langfuse",
+      "description": "langfuse/langfuse-postgres-rw via localhost:55441 (port-forward)",
+      "save-password": false,
+      "read-only": true,
+      "folder": "Production",
+      "connection-type": "prod",
+      "configuration": {
+        "host": "localhost",
+        "port": "55441",
+        "database": "langfuse",
+        "url": "jdbc:postgresql://localhost:55441/langfuse",
+        "auth-model": "native",
+        "provider-properties": {
+          "postgresql.show.all.databases": "true"
+        }
+      }
+    },
+    "postgres-nextcloud-nextcloud-postgres-rw": {
+      "provider": "postgresql",
+      "driver": "postgres-jdbc",
+      "name": "nextcloud",
+      "description": "nextcloud/nextcloud-postgres-rw via localhost:55442 (port-forward)",
+      "save-password": false,
+      "read-only": true,
+      "folder": "Production",
+      "connection-type": "prod",
+      "configuration": {
+        "host": "localhost",
+        "port": "55442",
+        "database": "nextcloud",
+        "url": "jdbc:postgresql://localhost:55442/nextcloud",
+        "auth-model": "native",
+        "provider-properties": {
+          "postgresql.show.all.databases": "true"
+        }
+      }
+    },
+    "postgres-retrieva-retrieva-cnpg-rw": {
+      "provider": "postgresql",
+      "driver": "postgres-jdbc",
+      "name": "retrieva (PROD)",
+      "description": "retrieva/retrieva-cnpg-rw via localhost:55443 (port-forward)",
+      "save-password": false,
+      "read-only": true,
+      "folder": "Production",
+      "connection-type": "prod",
+      "configuration": {
+        "host": "localhost",
+        "port": "55443",
+        "database": "retrieva",
+        "url": "jdbc:postgresql://localhost:55443/retrieva",
+        "auth-model": "native",
+        "provider-properties": {
+          "postgresql.show.all.databases": "true"
+        }
+      }
+    },
+    "postgres-underwriting-underwriting-postgres-rw": {
+      "provider": "postgresql",
+      "driver": "postgres-jdbc",
+      "name": "underwriting (dev)",
+      "description": "underwriting/underwriting-postgres-rw via localhost:55444 (port-forward)",
+      "save-password": false,
+      "read-only": false,
+      "folder": "Development",
+      "connection-type": "dev",
+      "configuration": {
+        "host": "localhost",
+        "port": "55444",
+        "database": "underwriting",
+        "url": "jdbc:postgresql://localhost:55444/underwriting",
+        "auth-model": "native",
+        "provider-properties": {
+          "postgresql.show.all.databases": "true"
+        }
+      }
+    },
+    "postgres-underwriting-prod-underwriting-postgres-rw": {
+      "provider": "postgresql",
+      "driver": "postgres-jdbc",
+      "name": "underwriting (PROD)",
+      "description": "underwriting-prod/underwriting-postgres-rw via localhost:55445 (port-forward)",
+      "save-password": false,
+      "read-only": true,
+      "folder": "Production",
+      "connection-type": "prod",
+      "configuration": {
+        "host": "localhost",
+        "port": "55445",
+        "database": "underwriting",
+        "url": "jdbc:postgresql://localhost:55445/underwriting",
+        "auth-model": "native",
+        "provider-properties": {
+          "postgresql.show.all.databases": "true"
+        }
+      }
+    },
+    "postgres-ai-postgresql-ai": {
+      "provider": "postgresql",
+      "driver": "postgres-jdbc",
+      "name": "ai platform pg",
+      "description": "ai/postgresql-ai via localhost:55446 (port-forward)",
+      "save-password": false,
+      "read-only": true,
+      "folder": "Production",
+      "connection-type": "prod",
+      "configuration": {
+        "host": "localhost",
+        "port": "55446",
+        "database": "postgres",
+        "url": "jdbc:postgresql://localhost:55446/postgres",
+        "auth-model": "native",
+        "provider-properties": {
+          "postgresql.show.all.databases": "true"
+        }
+      }
+    },
+    "postgres-backstage-backstage-postgresql": {
+      "provider": "postgresql",
+      "driver": "postgres-jdbc",
+      "name": "backstage",
+      "description": "backstage/backstage-postgresql via localhost:55447 (port-forward)",
+      "save-password": false,
+      "read-only": true,
+      "folder": "Production",
+      "connection-type": "prod",
+      "configuration": {
+        "host": "localhost",
+        "port": "55447",
+        "database": "postgres",
+        "url": "jdbc:postgresql://localhost:55447/postgres",
+        "auth-model": "native",
+        "provider-properties": {
+          "postgresql.show.all.databases": "true"
+        }
+      }
+    },
+    "postgres-ktayl-iam-ktayl-iam-postgres": {
+      "provider": "postgresql",
+      "driver": "postgres-jdbc",
+      "name": "ktayl-iam STS (dev)",
+      "description": "ktayl-iam/ktayl-iam-postgres via localhost:55448 (port-forward)",
+      "save-password": false,
+      "read-only": false,
+      "folder": "Development",
+      "connection-type": "dev",
+      "configuration": {
+        "host": "localhost",
+        "port": "55448",
+        "database": "postgres",
+        "url": "jdbc:postgresql://localhost:55448/postgres",
+        "auth-model": "native",
+        "provider-properties": {
+          "postgresql.show.all.databases": "true"
+        }
+      }
+    },
+    "postgres-retrieva-dev-retrieva-postgres": {
+      "provider": "postgresql",
+      "driver": "postgres-jdbc",
+      "name": "retrieva (dev)",
+      "description": "retrieva-dev/retrieva-postgres via localhost:55449 (port-forward)",
+      "save-password": false,
+      "read-only": false,
+      "folder": "Development",
+      "connection-type": "dev",
+      "configuration": {
+        "host": "localhost",
+        "port": "55449",
+        "database": "postgres",
+        "url": "jdbc:postgresql://localhost:55449/postgres",
+        "auth-model": "native",
+        "provider-properties": {
+          "postgresql.show.all.databases": "true"
+        }
+      }
+    },
+    "postgres-temporal-temporal-postgresql": {
+      "provider": "postgresql",
+      "driver": "postgres-jdbc",
+      "name": "temporal",
+      "description": "temporal/temporal-postgresql via localhost:55450 (port-forward)",
+      "save-password": false,
+      "read-only": true,
+      "folder": "Production",
+      "connection-type": "prod",
+      "configuration": {
+        "host": "localhost",
+        "port": "55450",
+        "database": "postgres",
+        "url": "jdbc:postgresql://localhost:55450/postgres",
+        "auth-model": "native",
+        "provider-properties": {
+          "postgresql.show.all.databases": "true"
+        }
+      }
+    },
+    "mariadb-erp-erpnext-mariadb-sts": {
+      "provider": "mysql",
+      "driver": "mariaDB",
+      "name": "erpnext",
+      "description": "erp/erpnext-mariadb-sts via localhost:53306 (port-forward)",
+      "save-password": false,
+      "read-only": true,
+      "folder": "Production",
+      "connection-type": "prod",
+      "configuration": {
+        "host": "localhost",
+        "port": "53306",
+        "database": "",
+        "url": "jdbc:mariadb://localhost:53306/",
+        "auth-model": "native"
+      }
+    },
+    "mariadb-intranet-bookstack-mariadb": {
+      "provider": "mysql",
+      "driver": "mariaDB",
+      "name": "bookstack",
+      "description": "intranet/bookstack-mariadb via localhost:53307 (port-forward)",
+      "save-password": false,
+      "read-only": true,
+      "folder": "Production",
+      "connection-type": "prod",
+      "configuration": {
+        "host": "localhost",
+        "port": "53307",
+        "database": "",
+        "url": "jdbc:mariadb://localhost:53307/",
+        "auth-model": "native"
+      }
+    },
+    "mariadb-itsm-glpi-mariadb": {
+      "provider": "mysql",
+      "driver": "mariaDB",
+      "name": "glpi itsm",
+      "description": "itsm/glpi-mariadb via localhost:53308 (port-forward)",
+      "save-password": false,
+      "read-only": true,
+      "folder": "Production",
+      "connection-type": "prod",
+      "configuration": {
+        "host": "localhost",
+        "port": "53308",
+        "database": "",
+        "url": "jdbc:mariadb://localhost:53308/",
+        "auth-model": "native"
+      }
+    },
+    "clickhouse-langfuse-langfuse-clickhouse": {
+      "provider": "clickhouse",
+      "driver": "clickhouse_com",
+      "name": "langfuse olap",
+      "description": "langfuse/langfuse-clickhouse via localhost:58123 (port-forward)",
+      "save-password": false,
+      "read-only": true,
+      "folder": "Production",
+      "connection-type": "prod",
+      "configuration": {
+        "host": "localhost",
+        "port": "58123",
+        "database": "default",
+        "url": "jdbc:clickhouse://localhost:58123/default",
+        "auth-model": "native"
+      }
+    }
+  }
+}
