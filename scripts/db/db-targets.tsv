@@ -1,0 +1,37 @@
+# Single source of truth for the local DBeaver DB cockpit (see dbeaver-db-access doc).
+# Both db-forward-all.sh and gen-dbeaver-sources.py read this file.
+# Columns (TAB-separated): localport  namespace  service  remoteport  engine  env  label  secret
+#   engine : postgres | mariadb | clickhouse   (DBeaver driver to use)
+#   env    : prod | dev   (prod => DBeaver Connection type=Production: red header + read-only default)
+#   service: CNPG clusters expose <cluster>-rw (follows the primary on failover) — always target -rw.
+#   secret : the k8s Secret holding the DB password (pull per-session; NEVER stored in the connection file).
+#            CNPG <cluster>-app secrets are kubernetes.io/basic-auth (keys: username,password,dbname).
+#            Plain-STS/vendor secrets are Opaque with varying keys — inspect with the discovery one-liner.
+#
+# ── PostgreSQL — CNPG clusters (target the -rw service) ───────────────────────────────────
+55432	authentik	authentik-cnpg-rw	5432	postgres	prod	authentik SSO	authentik-cnpg-app
+55433	chat	synapse-postgres-rw	5432	postgres	prod	matrix synapse	synapse-postgres-app
+55434	claims	claims-postgres-rw	5432	postgres	dev	claims (dev)	claims-postgres-app
+55435	claims-prod	claims-postgres-rw	5432	postgres	prod	claims (PROD)	claims-postgres-app
+55436	data-platform	dp-postgres-rw	5432	postgres	prod	data platform	dp-postgres-app
+55437	ktayl-core	ktayl-core-cnpg-rw	5432	postgres	dev	ktayl-core (dev)	ktayl-core-cnpg-app
+55438	ktayl-core-prod	ktayl-core-cnpg-rw	5432	postgres	prod	ktayl-core (PROD)	ktayl-core-cnpg-app
+55439	ktayl-dms	paperless-cnpg-rw	5432	postgres	prod	paperless DMS	paperless-cnpg-app
+55440	ktayl-iam-prod	ktayl-iam-cnpg-rw	5432	postgres	prod	ktayl-iam (PROD)	ktayl-iam-cnpg-app
+55441	langfuse	langfuse-postgres-rw	5432	postgres	prod	langfuse	langfuse-postgres-app
+55442	nextcloud	nextcloud-postgres-rw	5432	postgres	prod	nextcloud	nextcloud-postgres-app
+55443	retrieva	retrieva-cnpg-rw	5432	postgres	prod	retrieva (PROD)	retrieva-cnpg-app
+55444	underwriting	underwriting-postgres-rw	5432	postgres	dev	underwriting (dev)	underwriting-postgres-app
+55445	underwriting-prod	underwriting-postgres-rw	5432	postgres	prod	underwriting (PROD)	underwriting-postgres-app
+# ── PostgreSQL — plain StatefulSets / vendor-bundled ─────────────────────────────────────
+55446	ai	postgresql-ai	5432	postgres	prod	ai platform pg	ai-postgresql-secret
+55447	backstage	backstage-postgresql	5432	postgres	prod	backstage	backstage-postgres-secret
+55448	ktayl-iam	ktayl-iam-postgres	5432	postgres	dev	ktayl-iam STS (dev)	ktayl-iam-postgres-secret
+55449	retrieva-dev	retrieva-postgres	5432	postgres	dev	retrieva (dev)	retrieva-secrets
+55450	temporal	temporal-postgresql	5432	postgres	prod	temporal	temporal-db-secret
+# ── MariaDB ──────────────────────────────────────────────────────────────────────────────
+53306	erp	erpnext-mariadb-sts	3306	mariadb	prod	erpnext	erpnext-dsn-config
+53307	intranet	bookstack-mariadb	3306	mariadb	prod	bookstack	bookstack-db-secret
+53308	itsm	glpi-mariadb	3306	mariadb	prod	glpi itsm	ktayl-itsm-db
+# ── ClickHouse (HTTP 8123) ───────────────────────────────────────────────────────────────
+58123	langfuse	langfuse-clickhouse	8123	clickhouse	prod	langfuse olap	langfuse-clickhouse
